@@ -2,7 +2,7 @@
   "name": "Daily Wins",
   "short_name": "DailyWins",
   "description": "Your daily habit tracker — streaks, points, and wins every day.",
-  "start_url": "/index.html",
+  "start_url": "/dailywins/index.html",
   "display": "standalone",
   "background_color": "#0a0a0f",
   "theme_color": "#f0c040",
