@@ -12,7 +12,8 @@
 <link rel="icon" type="image/svg+xml" href="favicon.svg"/>
 <link rel="apple-touch-icon" href="favicon-192.png"/>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
-<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;700&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+<noscript><link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;700&display=swap" rel="stylesheet"></noscript>
 <style>
   :root {
     --gold:#f0c040;--gold-dim:#c49a20;--bg:#0a0a0f;--surface:#13131c;--surface2:#1c1c2a;
@@ -641,7 +642,7 @@ const VOCAB = [
   {id:'v001',es:'Hola',en:'Hello',ph:'/ˈo-la/',type:'interjection',topic:'Greetings',emoji:'👋',ex:'¡<span>Hola</span>! ¿Cómo estás?',exEn:'Hello! How are you?'},
   {id:'v002',es:'Gracias',en:'Thank you',ph:'/ˈɡra-sjas/',type:'interjection',topic:'Greetings',emoji:'👋',ex:'Muchas <span>gracias</span> por tu ayuda.',exEn:'Thank you very much for your help.'},
   {id:'v003',es:'Por favor',en:'Please',ph:'/por fa-ˈβor/',type:'interjection',topic:'Greetings',emoji:'👋',ex:'Un café, <span>por favor</span>.',exEn:'A coffee, please.'},
-  {id:'v004',es:'Lo siento',en:'I'm sorry',ph:'/lo ˈsjen-to/',type:'phrase',topic:'Greetings',emoji:'👋',ex:'<span>Lo siento</span>, no entiendo.',exEn:'I'm sorry, I don't understand.'},
+  {id:'v004',es:'Lo siento',en:'I am sorry',ph:'/lo ˈsjen-to/',type:'phrase',topic:'Greetings',emoji:'👋',ex:'<span>Lo siento</span>, no entiendo.',exEn:'I am sorry, I do not understand.'},
   {id:'v005',es:'¿Cómo estás?',en:'How are you?',ph:'/ˈko-mo es-ˈtas/',type:'phrase',topic:'Greetings',emoji:'👋',ex:'<span>¿Cómo estás</span> hoy?',exEn:'How are you today?'},
   // ── NUMBERS
   {id:'v006',es:'Uno',en:'One',ph:'/ˈu-no/',type:'number',topic:'Numbers',emoji:'🔢',ex:'Solo quiero <span>uno</span>.',exEn:'I only want one.'},
@@ -663,7 +664,7 @@ const VOCAB = [
   {id:'v020',es:'Cansado',en:'Tired',ph:'/kanˈsa-do/',type:'adjective',topic:'Health',emoji:'💪',ex:'Estoy muy <span>cansado</span> hoy.',exEn:'I am very tired today.'},
   // ── TRAVEL
   {id:'v021',es:'Aeropuerto',en:'Airport',ph:'/ae-ro-ˈpwer-to/',type:'noun',topic:'Travel',emoji:'✈️',ex:'El <span>aeropuerto</span> está lejos.',exEn:'The airport is far away.'},
-  {id:'v022',es:'Hotel',en:'Hotel',ph:'/oˈtel/',type:'noun',topic:'Travel',emoji:'✈️',ex:'Busco un buen <span>hotel</span>.',exEn:'I'm looking for a good hotel.'},
+  {id:'v022',es:'Hotel',en:'Hotel',ph:'/oˈtel/',type:'noun',topic:'Travel',emoji:'✈️',ex:'Busco un buen <span>hotel</span>.',exEn:'I am looking for a good hotel.'},
   {id:'v023',es:'Pasaporte',en:'Passport',ph:'/pa-saˈpor-te/',type:'noun',topic:'Travel',emoji:'✈️',ex:'¿Dónde está mi <span>pasaporte</span>?',exEn:'Where is my passport?'},
   {id:'v024',es:'Viaje',en:'Trip / Journey',ph:'/ˈbja-xe/',type:'noun',topic:'Travel',emoji:'✈️',ex:'El <span>viaje</span> fue increíble.',exEn:'The trip was incredible.'},
   {id:'v025',es:'¿Dónde está?',en:'Where is it?',ph:'/ˈdon-de esˈta/',type:'phrase',topic:'Travel',emoji:'✈️',ex:'<span>¿Dónde está</span> el baño?',exEn:'Where is the bathroom?'},
@@ -1694,8 +1695,11 @@ function showScreen(id,btn){
 // ════════════════════════════════════
 //  INIT
 // ════════════════════════════════════
-if('speechSynthesis' in window)window.speechSynthesis.getVoices();
-renderAll();
+if('speechSynthesis' in window){
+  window.speechSynthesis.getVoices();
+  window.speechSynthesis.onvoiceschanged = function(){};
+}
+try { renderAll(); } catch(e){ console.error('renderAll error:', e); }
 if('serviceWorker' in navigator){
   navigator.serviceWorker.register('sw.js').then(()=>{
     // Re-schedule alarm on every app open so it survives SW restarts
