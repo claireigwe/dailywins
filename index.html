@@ -202,6 +202,80 @@
   .cal-legend{display:flex;gap:14px;margin-bottom:20px;font-size:11px;color:var(--text-dim);flex-wrap:wrap;}
   .cal-legend-item{display:flex;align-items:center;gap:5px;}
   .cal-legend-dot{width:10px;height:10px;border-radius:3px;}
+
+  /* ── VOCABULARY ── */
+  .vocab-prog-bar{background:var(--surface);border-radius:99px;height:6px;margin-bottom:6px;overflow:hidden;}
+  .vocab-prog-fill{height:100%;background:linear-gradient(90deg,var(--purple),var(--blue));border-radius:99px;transition:width 0.6s cubic-bezier(.4,0,.2,1);}
+  .vocab-prog-label{font-size:11px;color:var(--text-dim);margin-bottom:16px;display:flex;justify-content:space-between;}
+  .vocab-mode-tabs{display:flex;gap:8px;margin-bottom:20px;}
+  .vocab-mode-tab{flex:1;padding:10px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);font-size:12px;font-weight:600;color:var(--text-dim);cursor:pointer;text-align:center;transition:all 0.2s;}
+  .vocab-mode-tab.active{background:rgba(176,124,255,0.15);border-color:var(--purple);color:var(--purple);}
+  .vocab-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:24px 20px;margin-bottom:16px;text-align:center;position:relative;min-height:180px;display:flex;flex-direction:column;align-items:center;justify-content:center;}
+  .vocab-topic-badge{position:absolute;top:14px;left:14px;font-size:10px;background:rgba(176,124,255,0.15);color:var(--purple);padding:3px 10px;border-radius:99px;font-weight:600;border:1px solid rgba(176,124,255,0.3);}
+  .vocab-mastered-badge{position:absolute;top:14px;right:14px;font-size:10px;background:rgba(61,220,132,0.15);color:var(--green);padding:3px 10px;border-radius:99px;font-weight:600;border:1px solid var(--green);display:none;}
+  .vocab-word{font-family:'Bebas Neue',sans-serif;font-size:52px;color:var(--gold);letter-spacing:2px;line-height:1;margin-bottom:6px;}
+  .vocab-phonetic{font-size:14px;color:var(--blue);margin-bottom:8px;font-style:italic;}
+  .vocab-type{font-size:11px;color:var(--text-dim);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;}
+  .vocab-translation{font-size:22px;font-weight:700;color:var(--text);margin-bottom:8px;}
+  .vocab-example{font-size:13px;color:var(--text-dim);line-height:1.5;font-style:italic;padding:10px 14px;background:var(--surface2);border-radius:var(--radius-sm);width:100%;text-align:left;}
+  .vocab-example span{color:var(--gold);font-style:normal;font-weight:600;}
+  .vocab-speak-btn{background:none;border:none;color:var(--blue);font-size:20px;cursor:pointer;padding:6px;margin-top:8px;}
+  .vocab-nav{display:flex;gap:10px;margin-bottom:16px;}
+  .vocab-nav-btn{flex:1;padding:12px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text);font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;cursor:pointer;transition:all 0.2s;text-align:center;}
+  .vocab-nav-btn.primary{background:rgba(240,192,64,0.12);border-color:rgba(240,192,64,0.4);color:var(--gold);}
+  .vocab-nav-btn.purple{background:rgba(176,124,255,0.12);border-color:rgba(176,124,255,0.4);color:var(--purple);}
+  .vocab-nav-btn:active{transform:scale(0.97);}
+  .vocab-nav-btn:disabled{opacity:0.3;cursor:not-allowed;}
+  .vocab-sr-info{font-size:12px;color:var(--text-dim);text-align:center;margin-bottom:16px;}
+  .vocab-sr-info span{color:var(--gold);font-weight:600;}
+  /* drill mode */
+  .drill-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:24px 20px;margin-bottom:16px;text-align:center;}
+  .drill-type-label{font-size:11px;color:var(--text-dim);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;}
+  .drill-question{font-family:'Bebas Neue',sans-serif;font-size:42px;color:var(--gold);letter-spacing:1px;line-height:1.1;margin-bottom:6px;}
+  .drill-question.en{font-family:'DM Sans',sans-serif;font-size:22px;font-weight:700;color:var(--text);}
+  .drill-blank{font-size:18px;color:var(--text);line-height:1.6;}
+  .drill-blank strong{color:var(--gold);font-family:'Bebas Neue',sans-serif;font-size:24px;letter-spacing:1px;}
+  .drill-opts{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px;}
+  .drill-opt{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:14px 10px;font-size:14px;font-weight:600;cursor:pointer;transition:all 0.2s;text-align:center;line-height:1.3;}
+  .drill-opt:active{transform:scale(0.97);}
+  .drill-opt.correct{background:rgba(61,220,132,0.15);border-color:var(--green);color:var(--green);}
+  .drill-opt.wrong{background:rgba(255,85,96,0.1);border-color:var(--red);color:var(--red);}
+  .drill-result{font-size:14px;font-weight:600;text-align:center;min-height:20px;margin-bottom:8px;}
+  .drill-result.correct{color:var(--green);}
+  .drill-result.wrong{color:var(--red);}
+  .drill-score-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;font-size:13px;color:var(--text-dim);}
+  .drill-score-row strong{color:var(--gold);font-size:16px;}
+  /* topic browser */
+  .topic-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px;}
+  .topic-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;cursor:pointer;transition:all 0.2s;text-align:center;}
+  .topic-card:active{transform:scale(0.97);}
+  .topic-card.active{border-color:var(--purple);background:rgba(176,124,255,0.08);}
+  .topic-emoji{font-size:28px;margin-bottom:6px;}
+  .topic-name{font-size:13px;font-weight:600;color:var(--text);}
+  .topic-count{font-size:11px;color:var(--text-dim);margin-top:2px;}
+  .topic-prog{height:3px;background:var(--surface2);border-radius:99px;margin-top:8px;overflow:hidden;}
+  .topic-prog-fill{height:100%;background:var(--purple);border-radius:99px;}
+  /* SRS indicator */
+  .srs-dots{display:flex;gap:4px;justify-content:center;margin-top:10px;}
+  .srs-dot{width:8px;height:8px;border-radius:50%;background:var(--surface2);border:1px solid var(--border);}
+  .srs-dot.filled{background:var(--purple);border-color:var(--purple);}
+
+  /* ── LANGUAGE PHASE SWITCHER ── */
+  .phase-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px;}
+  .phase-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px;cursor:pointer;transition:all 0.2s;position:relative;overflow:hidden;}
+  .phase-card:active{transform:scale(0.97);}
+  .phase-card.active{border-color:var(--gold);background:rgba(240,192,64,0.06);}
+  .phase-card.locked{opacity:0.45;cursor:not-allowed;}
+  .phase-card.locked::after{content:'🔒';position:absolute;top:10px;right:10px;font-size:14px;}
+  .phase-num{font-family:'Bebas Neue',sans-serif;font-size:11px;color:var(--text-dim);letter-spacing:1px;margin-bottom:2px;}
+  .phase-name{font-size:14px;font-weight:700;color:var(--text);}
+  .phase-card.active .phase-name{color:var(--gold);}
+  .phase-sub{font-size:11px;color:var(--text-dim);margin-top:3px;}
+  .phase-prog{height:3px;background:var(--surface2);border-radius:99px;margin-top:8px;overflow:hidden;}
+  .phase-prog-fill{height:100%;border-radius:99px;transition:width 0.5s;}
+  .phase-prog-fill.gold{background:var(--gold);}
+  .phase-prog-fill.purple{background:var(--purple);}
+  .lang-phase-content{animation:fadeUp 0.3s ease;}
   /* MISC */
   #toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--surface);border:1px solid var(--border);border-radius:99px;padding:10px 20px;font-size:13px;font-weight:600;white-space:nowrap;opacity:0;transition:all 0.3s;z-index:1000;pointer-events:none;max-width:90vw;text-align:center;}
   #toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
@@ -321,61 +395,137 @@
       </div>
     </div>
 
-    <!-- ALPHABET -->
-    <div class="screen" id="screen-alpha">
-      <div class="section-title">🔤 SPANISH <span>ALPHABET</span></div>
-      <div class="alpha-prog-bar"><div class="alpha-prog-fill" id="alphaProgFill" style="width:0%"></div></div>
-      <div class="alpha-prog-label"><span id="alphaProgText">0 of 27 mastered</span><span id="alphaProgPct">0%</span></div>
-      <div class="mode-tabs">
-        <div class="mode-tab active" id="tab-learn" onclick="switchMode('learn')">📖 Learn</div>
-        <div class="mode-tab" id="tab-browse" onclick="switchMode('browse')">🗂 All</div>
-        <div class="mode-tab" id="tab-quiz" onclick="switchMode('quiz')">🧠 Quiz</div>
+    <!-- LANGUAGE -->
+    <div class="screen" id="screen-lang">
+      <div class="section-title">🌍 <span>LANGUAGE</span></div>
+
+      <!-- Phase selector cards -->
+      <div class="phase-row">
+        <div class="phase-card active" id="phase-card-1" onclick="switchPhase(1)">
+          <div class="phase-num">PHASE 1</div>
+          <div class="phase-name">🔤 Alphabet</div>
+          <div class="phase-sub" id="phase1-sub">Sounds & letters</div>
+          <div class="phase-prog"><div class="phase-prog-fill gold" id="phase1-prog" style="width:0%"></div></div>
+        </div>
+        <div class="phase-card" id="phase-card-2" onclick="switchPhase(2)">
+          <div class="phase-num">PHASE 2</div>
+          <div class="phase-name">📖 Vocabulary</div>
+          <div class="phase-sub" id="phase2-sub">Core words</div>
+          <div class="phase-prog"><div class="phase-prog-fill purple" id="phase2-prog" style="width:0%"></div></div>
+        </div>
+        <div class="phase-card locked" id="phase-card-3">
+          <div class="phase-num">PHASE 3</div>
+          <div class="phase-name">💬 Sentences</div>
+          <div class="phase-sub">Coming soon</div>
+          <div class="phase-prog"><div class="phase-prog-fill" style="width:0%;background:var(--green)"></div></div>
+        </div>
+        <div class="phase-card locked" id="phase-card-4">
+          <div class="phase-num">PHASE 4</div>
+          <div class="phase-name">🎧 Listening</div>
+          <div class="phase-sub">Coming soon</div>
+          <div class="phase-prog"><div class="phase-prog-fill" style="width:0%;background:var(--blue)"></div></div>
+        </div>
       </div>
 
-      <!-- LEARN -->
-      <div id="mode-learn">
-        <div class="letter-card" id="letterCard">
-          <div class="mastered-badge" id="masteredBadge" style="display:none">✓ Mastered</div>
-          <div class="letter-big" id="lBig">A</div>
-          <div class="letter-name-row">Called: <span id="lName">—</span></div>
-          <div class="sound-label">How it sounds</div>
-          <div class="letter-phonetic" id="lPhonetic">—</div>
-          <div class="letter-sound-desc" id="lSoundDesc">—</div>
-          <div class="mouth-box">
-            <div class="mouth-box-title">👄 How to make this sound</div>
-            <div class="mouth-tip" id="lMouth">—</div>
+      <!-- PHASE 1: ALPHABET -->
+      <div id="lang-phase-1" class="lang-phase-content">
+        <div class="alpha-prog-bar"><div class="alpha-prog-fill" id="alphaProgFill" style="width:0%"></div></div>
+        <div class="alpha-prog-label"><span id="alphaProgText">0 of 27 mastered</span><span id="alphaProgPct">0%</span></div>
+        <div class="mode-tabs">
+          <div class="mode-tab active" id="tab-learn" onclick="switchMode('learn')">📖 Learn</div>
+          <div class="mode-tab" id="tab-browse" onclick="switchMode('browse')">🗂 All</div>
+          <div class="mode-tab" id="tab-quiz" onclick="switchMode('quiz')">🧠 Quiz</div>
+        </div>
+        <div id="mode-learn">
+          <div class="letter-card" id="letterCard">
+            <div class="mastered-badge" id="masteredBadge" style="display:none">✓ Mastered</div>
+            <div class="letter-big" id="lBig">A</div>
+            <div class="letter-name-row">Called: <span id="lName">—</span></div>
+            <div class="sound-label">How it sounds</div>
+            <div class="letter-phonetic" id="lPhonetic">—</div>
+            <div class="letter-sound-desc" id="lSoundDesc">—</div>
+            <div class="mouth-box">
+              <div class="mouth-box-title">👄 How to make this sound</div>
+              <div class="mouth-tip" id="lMouth">—</div>
+            </div>
+            <div style="font-size:12px;color:var(--text-dim);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">Example words</div>
+            <div class="examples-row" id="lExamples"></div>
           </div>
-          <div style="font-size:12px;color:var(--text-dim);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">Example words</div>
-          <div class="examples-row" id="lExamples"></div>
+          <button class="speak-btn" id="speakBtn" onclick="speakLetter()">🔊 Hear it spoken</button>
+          <div class="letter-nav">
+            <button class="letter-nav-btn" id="prevBtn" onclick="goLetter(-1)">← Prev</button>
+            <button class="letter-nav-btn primary" onclick="markMastered()">✓ Got it!</button>
+            <button class="letter-nav-btn" id="nextBtn" onclick="goLetter(1)">Next →</button>
+          </div>
         </div>
-        <button class="speak-btn" id="speakBtn" onclick="speakLetter()">🔊 Hear it spoken</button>
-        <div class="letter-nav">
-          <button class="letter-nav-btn" id="prevBtn" onclick="goLetter(-1)">← Prev</button>
-          <button class="letter-nav-btn primary" onclick="markMastered()">✓ Got it!</button>
-          <button class="letter-nav-btn" id="nextBtn" onclick="goLetter(1)">Next →</button>
+        <div id="mode-browse" style="display:none"><div class="alpha-grid" id="alphaGrid"></div></div>
+        <div id="mode-quiz" style="display:none">
+          <div class="quiz-score-row">
+            <span>Score: <strong id="qScore">0</strong></span>
+            <span id="qStreak">🔥 0 in a row</span>
+            <span id="qProg">Q 1/10</span>
+          </div>
+          <div class="quiz-card">
+            <div class="quiz-q" id="qQuestion">What is this letter called?</div>
+            <div class="quiz-letter" id="qLetter">—</div>
+          </div>
+          <div class="quiz-opts" id="qOpts"></div>
         </div>
       </div>
 
-      <!-- BROWSE -->
-      <div id="mode-browse" style="display:none">
-        <div class="alpha-grid" id="alphaGrid"></div>
-      </div>
-
-      <!-- QUIZ -->
-      <div id="mode-quiz" style="display:none">
-        <div class="quiz-score-row">
-          <span>Score: <strong id="qScore">0</strong></span>
-          <span id="qStreak">🔥 0 in a row</span>
-          <span id="qProg">Q 1/10</span>
+      <!-- PHASE 2: VOCABULARY -->
+      <div id="lang-phase-2" class="lang-phase-content" style="display:none">
+        <div class="vocab-prog-bar"><div class="vocab-prog-fill" id="vocabProgFill" style="width:0%"></div></div>
+        <div class="vocab-prog-label"><span id="vocabProgText">0 words learned</span><span id="vocabProgPct">0%</span></div>
+        <div class="vocab-mode-tabs">
+          <div class="vocab-mode-tab active" id="vtab-learn" onclick="switchVocabMode('learn')">📖 Learn</div>
+          <div class="vocab-mode-tab" id="vtab-drill" onclick="switchVocabMode('drill')">⚡ Drill</div>
+          <div class="vocab-mode-tab" id="vtab-topics" onclick="switchVocabMode('topics')">🗂 Topics</div>
         </div>
-        <div class="quiz-card">
-          <div class="quiz-q" id="qQuestion">What is this letter called?</div>
-          <div class="quiz-letter" id="qLetter">—</div>
+        <div id="vmode-learn">
+          <div class="vocab-sr-info">Next review: <span id="srNextInfo">—</span> · Due today: <span id="srDueCount">0</span></div>
+          <div class="vocab-card" id="vocabCard">
+            <div class="vocab-topic-badge" id="vcTopicBadge">—</div>
+            <div class="vocab-mastered-badge" id="vcMasteredBadge">✓ Known</div>
+            <div class="vocab-word" id="vcWord">—</div>
+            <div class="vocab-phonetic" id="vcPhonetic">—</div>
+            <div class="vocab-type" id="vcType">—</div>
+            <div class="vocab-translation" id="vcTranslation">—</div>
+            <div class="vocab-example" id="vcExample">—</div>
+            <button class="vocab-speak-btn" onclick="speakVocabWord()">🔊</button>
+          </div>
+          <div class="srs-dots" id="srsDots"></div>
+          <div style="margin-top:12px;margin-bottom:8px;font-size:12px;color:var(--text-dim);text-align:center;">How well did you know this?</div>
+          <div class="vocab-nav">
+            <button class="vocab-nav-btn" onclick="rateWord(0)" style="color:var(--red);border-color:rgba(255,85,96,0.4);background:rgba(255,85,96,0.08);">✗ No idea</button>
+            <button class="vocab-nav-btn" onclick="rateWord(1)" style="color:var(--gold);border-color:rgba(240,192,64,0.4);background:rgba(240,192,64,0.08);">~ Sort of</button>
+            <button class="vocab-nav-btn primary" onclick="rateWord(2)">✓ Got it!</button>
+          </div>
+          <div class="vocab-nav">
+            <button class="vocab-nav-btn" id="vprevBtn" onclick="vocabNav(-1)">← Prev</button>
+            <button class="vocab-nav-btn purple" onclick="speakVocabWord()">🔊 Hear it</button>
+            <button class="vocab-nav-btn" id="vnextBtn" onclick="vocabNav(1)">Next →</button>
+          </div>
         </div>
-        <div class="quiz-opts" id="qOpts"></div>
+        <div id="vmode-drill" style="display:none">
+          <div class="drill-score-row">
+            <span>Score: <strong id="drillScore">0</strong></span>
+            <span id="drillStreak">🔥 0 in a row</span>
+            <span id="drillProg">Q 1/10</span>
+          </div>
+          <div class="drill-card">
+            <div class="drill-type-label" id="drillTypeLabel">Translate to English</div>
+            <div class="drill-question" id="drillQuestion">—</div>
+            <div class="drill-blank" id="drillBlank" style="display:none"></div>
+          </div>
+          <div class="drill-opts" id="drillOpts"></div>
+          <div class="drill-result" id="drillResult"></div>
+        </div>
+        <div id="vmode-topics" style="display:none">
+          <div class="topic-grid" id="topicGrid"></div>
+        </div>
       </div>
     </div>
-
     <!-- STATS -->
     <div class="screen" id="screen-stats">
       <div class="section-title">YOUR <span>STATS</span></div>
@@ -445,7 +595,7 @@
 
   <nav id="nav">
     <button class="nav-btn active" onclick="showScreen('today',this)"><span class="nav-icon">🏠</span>Today</button>
-    <button class="nav-btn" onclick="showScreen('alpha',this)"><span class="nav-icon">🔤</span>Alphabet</button>
+    <button class="nav-btn" onclick="showScreen('lang',this)"><span class="nav-icon">🌍</span>Language</button>
     <button class="nav-btn" onclick="showScreen('stats',this)"><span class="nav-icon">📊</span>Stats</button>
     <button class="nav-btn" onclick="showScreen('settings',this)"><span class="nav-icon">⚙️</span>Settings</button>
   </nav>
@@ -453,6 +603,377 @@
 <div id="toast"></div>
 
 <script>
+
+
+// ════════════════════════════════════
+//  PHASE SWITCHER
+// ════════════════════════════════════
+let currentPhase = 1;
+function switchPhase(num){
+  if(num===3||num===4){toast('Coming soon! Keep learning 💪','',2000);return;}
+  currentPhase=num;
+  document.getElementById('lang-phase-1').style.display=num===1?'block':'none';
+  document.getElementById('lang-phase-2').style.display=num===2?'block':'none';
+  [1,2,3,4].forEach(n=>{
+    const c=document.getElementById('phase-card-'+n);
+    if(c&&!c.classList.contains('locked'))c.classList.toggle('active',n===num);
+  });
+  if(num===1){renderLearn();renderAlphaProgress();}
+  if(num===2){renderVocabLearn();renderVocabProgress();}
+  updatePhaseProg();
+  document.getElementById('content').scrollTo({top:0,behavior:'smooth'});
+}
+function updatePhaseProg(){
+  const alphaPct=Math.round((state.masteredLetters.length/27)*100);
+  document.getElementById('phase1-prog').style.width=alphaPct+'%';
+  document.getElementById('phase1-sub').textContent=state.masteredLetters.length+'/27 mastered';
+  const srs=getSRS?getSRS():{};
+  const learned=typeof VOCAB!=='undefined'?VOCAB.filter(w=>srs[w.id]&&srs[w.id].level>=2).length:0;
+  const vocabPct=typeof VOCAB!=='undefined'?Math.round((learned/VOCAB.length)*100):0;
+  document.getElementById('phase2-prog').style.width=vocabPct+'%';
+  document.getElementById('phase2-sub').textContent=learned+' words learned';
+}
+// ════════════════════════════════════
+//  VOCABULARY DATA
+// ════════════════════════════════════
+const VOCAB = [
+  // ── GREETINGS & BASICS
+  {id:'v001',es:'Hola',en:'Hello',ph:'/ˈo-la/',type:'interjection',topic:'Greetings',emoji:'👋',ex:'¡<span>Hola</span>! ¿Cómo estás?',exEn:'Hello! How are you?'},
+  {id:'v002',es:'Gracias',en:'Thank you',ph:'/ˈɡra-sjas/',type:'interjection',topic:'Greetings',emoji:'👋',ex:'Muchas <span>gracias</span> por tu ayuda.',exEn:'Thank you very much for your help.'},
+  {id:'v003',es:'Por favor',en:'Please',ph:'/por fa-ˈβor/',type:'interjection',topic:'Greetings',emoji:'👋',ex:'Un café, <span>por favor</span>.',exEn:'A coffee, please.'},
+  {id:'v004',es:'Lo siento',en:'I'm sorry',ph:'/lo ˈsjen-to/',type:'phrase',topic:'Greetings',emoji:'👋',ex:'<span>Lo siento</span>, no entiendo.',exEn:'I'm sorry, I don't understand.'},
+  {id:'v005',es:'¿Cómo estás?',en:'How are you?',ph:'/ˈko-mo es-ˈtas/',type:'phrase',topic:'Greetings',emoji:'👋',ex:'<span>¿Cómo estás</span> hoy?',exEn:'How are you today?'},
+  // ── NUMBERS
+  {id:'v006',es:'Uno',en:'One',ph:'/ˈu-no/',type:'number',topic:'Numbers',emoji:'🔢',ex:'Solo quiero <span>uno</span>.',exEn:'I only want one.'},
+  {id:'v007',es:'Dos',en:'Two',ph:'/dos/',type:'number',topic:'Numbers',emoji:'🔢',ex:'Tengo <span>dos</span> hermanos.',exEn:'I have two brothers.'},
+  {id:'v008',es:'Tres',en:'Three',ph:'/tres/',type:'number',topic:'Numbers',emoji:'🔢',ex:'Son las <span>tres</span> de la tarde.',exEn:'It is three in the afternoon.'},
+  {id:'v009',es:'Diez',en:'Ten',ph:'/djes/',type:'number',topic:'Numbers',emoji:'🔢',ex:'Tengo <span>diez</span> minutos.',exEn:'I have ten minutes.'},
+  {id:'v010',es:'Cien',en:'One hundred',ph:'/sjen/',type:'number',topic:'Numbers',emoji:'🔢',ex:'Cuesta <span>cien</span> pesos.',exEn:'It costs one hundred pesos.'},
+  // ── FOOD
+  {id:'v011',es:'Arroz',en:'Rice',ph:'/aˈros/',type:'noun',topic:'Food',emoji:'🍽️',ex:'Me gusta el <span>arroz</span> con pollo.',exEn:'I like rice with chicken.'},
+  {id:'v012',es:'Pollo',en:'Chicken',ph:'/ˈpo-ʝo/',type:'noun',topic:'Food',emoji:'🍽️',ex:'El <span>pollo</span> está delicioso.',exEn:'The chicken is delicious.'},
+  {id:'v013',es:'Pan',en:'Bread',ph:'/pan/',type:'noun',topic:'Food',emoji:'🍽️',ex:'Compré <span>pan</span> fresco.',exEn:'I bought fresh bread.'},
+  {id:'v014',es:'Fruta',en:'Fruit',ph:'/ˈfru-ta/',type:'noun',topic:'Food',emoji:'🍽️',ex:'Como <span>fruta</span> cada mañana.',exEn:'I eat fruit every morning.'},
+  {id:'v015',es:'Agua',en:'Water',ph:'/ˈa-ɡwa/',type:'noun',topic:'Food',emoji:'🍽️',ex:'Necesito <span>agua</span>, por favor.',exEn:'I need water, please.'},
+  // ── BODY & HEALTH
+  {id:'v016',es:'Salud',en:'Health',ph:'/saˈlud/',type:'noun',topic:'Health',emoji:'💪',ex:'La <span>salud</span> es lo más importante.',exEn:'Health is the most important thing.'},
+  {id:'v017',es:'Correr',en:'To run',ph:'/koˈrer/',type:'verb',topic:'Health',emoji:'💪',ex:'Me gusta <span>correr</span> por la mañana.',exEn:'I like to run in the morning.'},
+  {id:'v018',es:'Dormir',en:'To sleep',ph:'/dorˈmir/',type:'verb',topic:'Health',emoji:'💪',ex:'Necesito <span>dormir</span> más.',exEn:'I need to sleep more.'},
+  {id:'v019',es:'Fuerte',en:'Strong',ph:'/ˈfwer-te/',type:'adjective',topic:'Health',emoji:'💪',ex:'Quiero ser más <span>fuerte</span>.',exEn:'I want to be stronger.'},
+  {id:'v020',es:'Cansado',en:'Tired',ph:'/kanˈsa-do/',type:'adjective',topic:'Health',emoji:'💪',ex:'Estoy muy <span>cansado</span> hoy.',exEn:'I am very tired today.'},
+  // ── TRAVEL
+  {id:'v021',es:'Aeropuerto',en:'Airport',ph:'/ae-ro-ˈpwer-to/',type:'noun',topic:'Travel',emoji:'✈️',ex:'El <span>aeropuerto</span> está lejos.',exEn:'The airport is far away.'},
+  {id:'v022',es:'Hotel',en:'Hotel',ph:'/oˈtel/',type:'noun',topic:'Travel',emoji:'✈️',ex:'Busco un buen <span>hotel</span>.',exEn:'I'm looking for a good hotel.'},
+  {id:'v023',es:'Pasaporte',en:'Passport',ph:'/pa-saˈpor-te/',type:'noun',topic:'Travel',emoji:'✈️',ex:'¿Dónde está mi <span>pasaporte</span>?',exEn:'Where is my passport?'},
+  {id:'v024',es:'Viaje',en:'Trip / Journey',ph:'/ˈbja-xe/',type:'noun',topic:'Travel',emoji:'✈️',ex:'El <span>viaje</span> fue increíble.',exEn:'The trip was incredible.'},
+  {id:'v025',es:'¿Dónde está?',en:'Where is it?',ph:'/ˈdon-de esˈta/',type:'phrase',topic:'Travel',emoji:'✈️',ex:'<span>¿Dónde está</span> el baño?',exEn:'Where is the bathroom?'},
+  // ── WORK
+  {id:'v026',es:'Trabajo',en:'Work / Job',ph:'/traˈba-xo/',type:'noun',topic:'Work',emoji:'💼',ex:'Mi <span>trabajo</span> es diseñador.',exEn:'My job is designer.'},
+  {id:'v027',es:'Reunión',en:'Meeting',ph:'/reu-ˈnjon/',type:'noun',topic:'Work',emoji:'💼',ex:'Tengo una <span>reunión</span> a las diez.',exEn:'I have a meeting at ten.'},
+  {id:'v028',es:'Proyecto',en:'Project',ph:'/proˈyek-to/',type:'noun',topic:'Work',emoji:'💼',ex:'El <span>proyecto</span> está listo.',exEn:'The project is ready.'},
+  {id:'v029',es:'Equipo',en:'Team',ph:'/eˈki-po/',type:'noun',topic:'Work',emoji:'💼',ex:'Mi <span>equipo</span> es muy bueno.',exEn:'My team is very good.'},
+  {id:'v030',es:'Jefe',en:'Boss',ph:'/ˈxe-fe/',type:'noun',topic:'Work',emoji:'💼',ex:'Mi <span>jefe</span> es simpático.',exEn:'My boss is nice.'},
+  // ── EMOTIONS
+  {id:'v031',es:'Feliz',en:'Happy',ph:'/feˈlis/',type:'adjective',topic:'Emotions',emoji:'😊',ex:'Estoy muy <span>feliz</span> hoy.',exEn:'I am very happy today.'},
+  {id:'v032',es:'Triste',en:'Sad',ph:'/ˈtris-te/',type:'adjective',topic:'Emotions',emoji:'😊',ex:'Me siento <span>triste</span>.',exEn:'I feel sad.'},
+  {id:'v033',es:'Emocionado',en:'Excited',ph:'/e-mo-sjoˈna-do/',type:'adjective',topic:'Emotions',emoji:'😊',ex:'Estoy muy <span>emocionado</span>.',exEn:'I am very excited.'},
+  {id:'v034',es:'Orgulloso',en:'Proud',ph:'/or-ɡuˈʝo-so/',type:'adjective',topic:'Emotions',emoji:'😊',ex:'Estoy <span>orgulloso</span> de ti.',exEn:'I am proud of you.'},
+  {id:'v035',es:'Esperanza',en:'Hope',ph:'/es-peˈran-sa/',type:'noun',topic:'Emotions',emoji:'😊',ex:'Tengo mucha <span>esperanza</span>.',exEn:'I have a lot of hope.'},
+  // ── TIME
+  {id:'v036',es:'Hoy',en:'Today',ph:'/oj/',type:'adverb',topic:'Time',emoji:'⏰',ex:'<span>Hoy</span> es un buen día.',exEn:'Today is a good day.'},
+  {id:'v037',es:'Mañana',en:'Tomorrow',ph:'/maˈɲa-na/',type:'adverb',topic:'Time',emoji:'⏰',ex:'Lo haré <span>mañana</span>.',exEn:'I will do it tomorrow.'},
+  {id:'v038',es:'Semana',en:'Week',ph:'/seˈma-na/',type:'noun',topic:'Time',emoji:'⏰',ex:'Esta <span>semana</span> es muy ocupada.',exEn:'This week is very busy.'},
+  {id:'v039',es:'Mes',en:'Month',ph:'/mes/',type:'noun',topic:'Time',emoji:'⏰',ex:'El próximo <span>mes</span> viajo.',exEn:'Next month I travel.'},
+  {id:'v040',es:'Siempre',en:'Always',ph:'/ˈsjem-pre/',type:'adverb',topic:'Time',emoji:'⏰',ex:'<span>Siempre</span> llego puntual.',exEn:'I always arrive on time.'},
+  // ── COMMON VERBS
+  {id:'v041',es:'Querer',en:'To want',ph:'/keˈrer/',type:'verb',topic:'Verbs',emoji:'🔤',ex:'<span>Quiero</span> aprender español.',exEn:'I want to learn Spanish.'},
+  {id:'v042',es:'Poder',en:'To be able to',ph:'/poˈder/',type:'verb',topic:'Verbs',emoji:'🔤',ex:'¿<span>Puedes</span> ayudarme?',exEn:'Can you help me?'},
+  {id:'v043',es:'Tener',en:'To have',ph:'/teˈner/',type:'verb',topic:'Verbs',emoji:'🔤',ex:'<span>Tengo</span> mucho trabajo.',exEn:'I have a lot of work.'},
+  {id:'v044',es:'Hacer',en:'To do / make',ph:'/aˈser/',type:'verb',topic:'Verbs',emoji:'🔤',ex:'¿Qué quieres <span>hacer</span>?',exEn:'What do you want to do?'},
+  {id:'v045',es:'Ir',en:'To go',ph:'/ir/',type:'verb',topic:'Verbs',emoji:'🔤',ex:'Voy a <span>ir</span> al gimnasio.',exEn:'I am going to go to the gym.'},
+  // ── HOME
+  {id:'v046',es:'Casa',en:'House',ph:'/ˈka-sa/',type:'noun',topic:'Home',emoji:'🏠',ex:'Mi <span>casa</span> es pequeña pero bonita.',exEn:'My house is small but pretty.'},
+  {id:'v047',es:'Cocina',en:'Kitchen',ph:'/koˈsi-na/',type:'noun',topic:'Home',emoji:'🏠',ex:'La <span>cocina</span> huele bien.',exEn:'The kitchen smells good.'},
+  {id:'v048',es:'Cama',en:'Bed',ph:'/ˈka-ma/',type:'noun',topic:'Home',emoji:'🏠',ex:'La <span>cama</span> es muy cómoda.',exEn:'The bed is very comfortable.'},
+  {id:'v049',es:'Ventana',en:'Window',ph:'/benˈta-na/',type:'noun',topic:'Home',emoji:'🏠',ex:'Abre la <span>ventana</span>, por favor.',exEn:'Open the window, please.'},
+  {id:'v050',es:'Llave',en:'Key',ph:'/ˈʝa-be/',type:'noun',topic:'Home',emoji:'🏠',ex:'¿Dónde está mi <span>llave</span>?',exEn:'Where is my key?'},
+  // ── PEOPLE
+  {id:'v051',es:'Amigo',en:'Friend',ph:'/aˈmi-ɡo/',type:'noun',topic:'People',emoji:'👥',ex:'Él es mi mejor <span>amigo</span>.',exEn:'He is my best friend.'},
+  {id:'v052',es:'Familia',en:'Family',ph:'/faˈmi-lja/',type:'noun',topic:'People',emoji:'👥',ex:'Mi <span>familia</span> es grande.',exEn:'My family is big.'},
+  {id:'v053',es:'Madre',en:'Mother',ph:'/ˈma-dre/',type:'noun',topic:'People',emoji:'👥',ex:'Mi <span>madre</span> cocina muy bien.',exEn:'My mother cooks very well.'},
+  {id:'v054',es:'Padre',en:'Father',ph:'/ˈpa-dre/',type:'noun',topic:'People',emoji:'👥',ex:'Mi <span>padre</span> es médico.',exEn:'My father is a doctor.'},
+  {id:'v055',es:'Hijo',en:'Son / Child',ph:'/ˈi-xo/',type:'noun',topic:'People',emoji:'👥',ex:'Tengo un <span>hijo</span>.',exEn:'I have a son.'},
+  // ── COLOURS
+  {id:'v056',es:'Rojo',en:'Red',ph:'/ˈro-xo/',type:'adjective',topic:'Colours',emoji:'🎨',ex:'El semáforo está en <span>rojo</span>.',exEn:'The traffic light is red.'},
+  {id:'v057',es:'Azul',en:'Blue',ph:'/aˈsul/',type:'adjective',topic:'Colours',emoji:'🎨',ex:'El cielo es <span>azul</span>.',exEn:'The sky is blue.'},
+  {id:'v058',es:'Verde',en:'Green',ph:'/ˈber-de/',type:'adjective',topic:'Colours',emoji:'🎨',ex:'Me encanta el color <span>verde</span>.',exEn:'I love the colour green.'},
+  {id:'v059',es:'Negro',en:'Black',ph:'/ˈne-ɣro/',type:'adjective',topic:'Colours',emoji:'🎨',ex:'Llevo ropa <span>negra</span>.',exEn:'I wear black clothes.'},
+  {id:'v060',es:'Blanco',en:'White',ph:'/ˈblaŋ-ko/',type:'adjective',topic:'Colours',emoji:'🎨',ex:'Las paredes son <span>blancas</span>.',exEn:'The walls are white.'},
+  // ── NATURE
+  {id:'v061',es:'Sol',en:'Sun',ph:'/sol/',type:'noun',topic:'Nature',emoji:'🌿',ex:'El <span>sol</span> brilla hoy.',exEn:'The sun is shining today.'},
+  {id:'v062',es:'Lluvia',en:'Rain',ph:'/ˈʝu-bja/',type:'noun',topic:'Nature',emoji:'🌿',ex:'Me gusta la <span>lluvia</span>.',exEn:'I like the rain.'},
+  {id:'v063',es:'Mar',en:'Sea',ph:'/mar/',type:'noun',topic:'Nature',emoji:'🌿',ex:'Quiero ir al <span>mar</span>.',exEn:'I want to go to the sea.'},
+  {id:'v064',es:'Árbol',en:'Tree',ph:'/ˈar-bol/',type:'noun',topic:'Nature',emoji:'🌿',ex:'El <span>árbol</span> es muy alto.',exEn:'The tree is very tall.'},
+  {id:'v065',es:'Flor',en:'Flower',ph:'/flor/',type:'noun',topic:'Nature',emoji:'🌿',ex:'La <span>flor</span> es hermosa.',exEn:'The flower is beautiful.'},
+  // ── ADJECTIVES
+  {id:'v066',es:'Grande',en:'Big / Large',ph:'/ˈɡran-de/',type:'adjective',topic:'Adjectives',emoji:'📝',ex:'Es una ciudad muy <span>grande</span>.',exEn:'It is a very big city.'},
+  {id:'v067',es:'Pequeño',en:'Small',ph:'/peˈke-ɲo/',type:'adjective',topic:'Adjectives',emoji:'📝',ex:'Mi apartamento es <span>pequeño</span>.',exEn:'My apartment is small.'},
+  {id:'v068',es:'Rápido',en:'Fast',ph:'/ˈra-pi-do/',type:'adjective',topic:'Adjectives',emoji:'📝',ex:'El tren es muy <span>rápido</span>.',exEn:'The train is very fast.'},
+  {id:'v069',es:'Difícil',en:'Difficult',ph:'/diˈfi-sil/',type:'adjective',topic:'Adjectives',emoji:'📝',ex:'El español no es tan <span>difícil</span>.',exEn:'Spanish is not that difficult.'},
+  {id:'v070',es:'Bonito',en:'Beautiful / Pretty',ph:'/boˈni-to/',type:'adjective',topic:'Adjectives',emoji:'📝',ex:'Qué día tan <span>bonito</span>.',exEn:'What a beautiful day.'},
+];
+
+const TOPICS = [...new Set(VOCAB.map(v=>v.topic))];
+const TOPICS_META = {
+  'Greetings':{emoji:'👋'},'Numbers':{emoji:'🔢'},'Food':{emoji:'🍽️'},
+  'Health':{emoji:'💪'},'Travel':{emoji:'✈️'},'Work':{emoji:'💼'},
+  'Emotions':{emoji:'😊'},'Time':{emoji:'⏰'},'Verbs':{emoji:'🔤'},
+  'Home':{emoji:'🏠'},'People':{emoji:'👥'},'Colours':{emoji:'🎨'},
+  'Nature':{emoji:'🌿'},'Adjectives':{emoji:'📝'},
+};
+
+// ════════════════════════════════════
+//  SRS ENGINE (Spaced Repetition)
+// ════════════════════════════════════
+// Each word has: level (0-5), nextReview (timestamp), correct, wrong
+function getSRS(){ return state.vocabSRS || (state.vocabSRS={}); }
+function getWordSRS(id){ const s=getSRS(); return s[id]||(s[id]={level:0,nextReview:0,correct:0,wrong:0}); }
+
+const SRS_INTERVALS = [0, 1, 3, 7, 14, 30]; // days between reviews
+
+function rateWord(rating){
+  const w = VOCAB[state.vocabIdx||0];
+  const srs = getWordSRS(w.id);
+  const now = Date.now();
+  if(rating===0){ srs.level=Math.max(0,srs.level-1); srs.wrong++; }
+  else if(rating===1){ srs.wrong++; }
+  else { srs.level=Math.min(5,srs.level+1); srs.correct++; }
+  const days = SRS_INTERVALS[srs.level];
+  srs.nextReview = now + days*86400000;
+  saveState();
+  beep(rating===2?'ok':'ping');
+  toast(rating===2?'✓ Great! See you in '+days+(days===1?' day':' days')+'':rating===1?'~ Coming back soon':'✗ Will review again shortly','',2000);
+  // Auto advance
+  setTimeout(()=>vocabNav(1),400);
+}
+
+function getDueWords(){
+  const now=Date.now();
+  return VOCAB.filter(w=>{ const s=getWordSRS(w.id); return s.nextReview<=now; });
+}
+
+function getNewWords(){
+  const srs=getSRS();
+  return VOCAB.filter(w=>!srs[w.id]||srs[w.id].level===0);
+}
+
+function getLearnQueue(){
+  const due=getDueWords();
+  if(due.length>0)return due;
+  const newW=getNewWords().slice(0,10);
+  if(newW.length>0)return newW;
+  return VOCAB;
+}
+
+// ════════════════════════════════════
+//  VOCABULARY — LEARN
+// ════════════════════════════════════
+let vocabFilterTopic = null;
+
+function renderVocabLearn(){
+  if(!state.vocabIdx)state.vocabIdx=0;
+  const pool = vocabFilterTopic ? VOCAB.filter(v=>v.topic===vocabFilterTopic) : getLearnQueue();
+  const idx = Math.min(state.vocabIdx, pool.length-1);
+  const w = pool[idx];
+  if(!w)return;
+
+  const srs=getWordSRS(w.id);
+  const mastered=srs.level>=4;
+  const daysUntil=srs.nextReview>Date.now()?Math.ceil((srs.nextReview-Date.now())/86400000):0;
+
+  document.getElementById('vcTopicBadge').textContent=(TOPICS_META[w.topic]?.emoji||'')+ ' '+w.topic;
+  document.getElementById('vcWord').textContent=w.es;
+  document.getElementById('vcPhonetic').textContent=w.ph;
+  document.getElementById('vcType').textContent=w.type;
+  document.getElementById('vcTranslation').textContent=w.en;
+  document.getElementById('vcExample').innerHTML=w.ex+'<br><small style="color:var(--text-dim);font-style:normal">'+w.exEn+'</small>';
+  document.getElementById('vcMasteredBadge').style.display=mastered?'block':'none';
+  document.getElementById('vprevBtn').disabled=idx===0;
+  document.getElementById('vnextBtn').disabled=idx===pool.length-1;
+
+  // SRS dots (level indicator)
+  const dots=document.getElementById('srsDots');
+  dots.innerHTML='';
+  for(let i=0;i<5;i++){
+    const d=document.createElement('div');
+    d.className='srs-dot'+(i<srs.level?' filled':'');
+    dots.appendChild(d);
+  }
+
+  // Due info
+  const due=getDueWords().length;
+  const nw=getNewWords().length;
+  document.getElementById('srDueCount').textContent=due>0?due:nw+' new';
+  document.getElementById('srNextInfo').textContent=daysUntil>0?'in '+daysUntil+'d':'now';
+
+  renderVocabProgress();
+}
+
+function vocabNav(dir){
+  const pool=vocabFilterTopic?VOCAB.filter(v=>v.topic===vocabFilterTopic):getLearnQueue();
+  state.vocabIdx=Math.max(0,Math.min(pool.length-1,(state.vocabIdx||0)+dir));
+  saveState();renderVocabLearn();
+  document.getElementById('content').scrollTo({top:0,behavior:'smooth'});
+}
+
+function speakVocabWord(){
+  const w=VOCAB[state.vocabIdx||0];
+  if(!('speechSynthesis' in window))return;
+  window.speechSynthesis.cancel();
+  const utt=new SpeechSynthesisUtterance(w.es);
+  utt.lang='es-ES';utt.rate=0.85;
+  const voices=window.speechSynthesis.getVoices();
+  const v=voices.find(v=>v.lang.startsWith('es'));if(v)utt.voice=v;
+  window.speechSynthesis.speak(utt);
+}
+
+function renderVocabProgress(){
+  const srs=getSRS();
+  const learned=VOCAB.filter(w=>srs[w.id]&&srs[w.id].level>=2).length;
+  const pct=Math.round((learned/VOCAB.length)*100);
+  document.getElementById('vocabProgFill').style.width=pct+'%';
+  document.getElementById('vocabProgText').textContent=learned+' of '+VOCAB.length+' words learned';
+  document.getElementById('vocabProgPct').textContent=pct+'%';
+}
+
+// ════════════════════════════════════
+//  VOCABULARY — DRILL
+// ════════════════════════════════════
+let drillState={score:0,streak:0,num:0,answered:false};
+const DRILL_TYPES=['es-en','en-es','blank'];
+
+function startDrill(){drillState={score:0,streak:0,num:0,answered:false};renderDrill();}
+
+function renderDrill(){
+  drillState.answered=false;
+  const type=DRILL_TYPES[Math.floor(Math.random()*DRILL_TYPES.length)];
+  drillState.type=type;
+
+  // Pick word — bias toward due/new
+  const pool=getDueWords().length>0?getDueWords():VOCAB;
+  const w=pool[Math.floor(Math.random()*pool.length)];
+  drillState.word=w;
+
+  // Wrong options
+  const others=VOCAB.filter(v=>v.id!==w.id).sort(()=>Math.random()-0.5).slice(0,3);
+
+  document.getElementById('drillScore').textContent=drillState.score;
+  document.getElementById('drillStreak').textContent='🔥 '+drillState.streak+' in a row';
+  document.getElementById('drillProg').textContent='Q '+(drillState.num+1)+'/10';
+  document.getElementById('drillResult').textContent='';
+  document.getElementById('drillResult').className='drill-result';
+  document.getElementById('drillBlank').style.display='none';
+  document.getElementById('drillQuestion').style.display='block';
+
+  let question, correctAns, wrongFn, label;
+
+  if(type==='es-en'){
+    label='Translate to English';
+    question=w.es; drillState.qClass='';
+    correctAns=w.en; wrongFn=v=>v.en;
+  } else if(type==='en-es'){
+    label='Translate to Spanish';
+    question=w.en; drillState.qClass='en';
+    correctAns=w.es; wrongFn=v=>v.es;
+  } else {
+    label='Fill in the blank';
+    document.getElementById('drillQuestion').style.display='none';
+    document.getElementById('drillBlank').style.display='block';
+    const blank=w.ex.replace('<span>'+w.es+'</span>','<strong>_____</strong>');
+    document.getElementById('drillBlank').innerHTML=blank;
+    correctAns=w.es; wrongFn=v=>v.es;
+  }
+
+  document.getElementById('drillTypeLabel').textContent=label;
+  const qEl=document.getElementById('drillQuestion');
+  qEl.textContent=question||'';
+  qEl.className='drill-question'+(drillState.qClass?' '+drillState.qClass:'');
+
+  const opts=[correctAns,...others.map(wrongFn)].sort(()=>Math.random()-0.5);
+  const el=document.getElementById('drillOpts');el.innerHTML='';
+  opts.forEach(o=>{
+    const btn=document.createElement('div');btn.className='drill-opt';btn.textContent=o;
+    btn.addEventListener('click',()=>answerDrill(o,correctAns,btn));
+    el.appendChild(btn);
+  });
+}
+
+function answerDrill(chosen,correct,btn){
+  if(drillState.answered)return;
+  drillState.answered=true;
+  const res=document.getElementById('drillResult');
+  if(chosen===correct){
+    btn.classList.add('correct');
+    drillState.score+=10;drillState.streak++;
+    res.textContent='✅ Correct!';res.className='drill-result correct';
+    beep('ok');
+    state.totalPoints+=5;
+    const srs=getWordSRS(drillState.word.id);
+    srs.correct=(srs.correct||0)+1;
+  } else {
+    btn.classList.add('wrong');
+    document.querySelectorAll('.drill-opt').forEach(b=>{if(b.textContent===correct)b.classList.add('correct');});
+    res.textContent='❌ It was: '+correct;res.className='drill-result wrong';
+    drillState.streak=0;beep('no');
+    const srs=getWordSRS(drillState.word.id);
+    srs.wrong=(srs.wrong||0)+1;
+  }
+  drillState.num++;saveState();
+  if(drillState.num>=10){
+    setTimeout(()=>{
+      toast('Drill done! Score: '+drillState.score+'/100 🏁','blue',4000);
+      if(drillState.score>=80)confetti();
+      startDrill();
+    },1800);
+  } else setTimeout(renderDrill,1600);
+}
+
+// ════════════════════════════════════
+//  VOCABULARY — TOPICS
+// ════════════════════════════════════
+function renderTopics(){
+  const grid=document.getElementById('topicGrid');
+  grid.innerHTML='';
+  const srs=getSRS();
+  TOPICS.forEach(topic=>{
+    const words=VOCAB.filter(v=>v.topic===topic);
+    const learned=words.filter(w=>srs[w.id]&&srs[w.id].level>=2).length;
+    const pct=Math.round((learned/words.length)*100);
+    const meta=TOPICS_META[topic]||{emoji:'📝'};
+    const card=document.createElement('div');
+    card.className='topic-card'+(vocabFilterTopic===topic?' active':'');
+    card.innerHTML=`<div class="topic-emoji">${meta.emoji}</div><div class="topic-name">${topic}</div><div class="topic-count">${learned}/${words.length} learned</div><div class="topic-prog"><div class="topic-prog-fill" style="width:${pct}%"></div></div>`;
+    card.addEventListener('click',()=>{
+      vocabFilterTopic=vocabFilterTopic===topic?null:topic;
+      state.vocabIdx=0;saveState();
+      switchVocabMode('learn');renderVocabLearn();
+    });
+    grid.appendChild(card);
+  });
+}
+
+function switchVocabMode(mode){
+  document.getElementById('vmode-learn').style.display=mode==='learn'?'block':'none';
+  document.getElementById('vmode-drill').style.display=mode==='drill'?'block':'none';
+  document.getElementById('vmode-topics').style.display=mode==='topics'?'block':'none';
+  document.getElementById('vtab-learn').className='vocab-mode-tab'+(mode==='learn'?' active':'');
+  document.getElementById('vtab-drill').className='vocab-mode-tab'+(mode==='drill'?' active':'');
+  document.getElementById('vtab-topics').className='vocab-mode-tab'+(mode==='topics'?' active':'');
+  if(mode==='learn')renderVocabLearn();
+  if(mode==='drill')startDrill();
+  if(mode==='topics')renderTopics();
+}
+
 // ════════════════════════════════════
 //  ALPHABET DATA
 // ════════════════════════════════════
@@ -576,6 +1097,8 @@ function saveState(){localStorage.setItem('dw_state',JSON.stringify(state));}
 
 let state=loadState()||{streak:0,bestStreak:0,totalPoints:0,totalDays:0,langCorrect:0,perfectDays:0,langIndex:0,langAnswered:false,masteredLetters:[],curLetterIdx:0,tasks:[],settings:{lang:'spanish',wakeTime:'06:00',notif:false,sound:true},days:{},lastDate:null};
 if(!state.tasks)state.tasks=[];
+if(!state.vocabSRS)state.vocabSRS={};
+if(!state.vocabIdx)state.vocabIdx=0;
 if(!state.masteredLetters)state.masteredLetters=[];
 if(!state.curLetterIdx)state.curLetterIdx=0;
 
@@ -634,7 +1157,7 @@ function confetti(){
 // ════════════════════════════════════
 //  RENDER
 // ════════════════════════════════════
-function renderAll(){renderHeader();renderIntention();renderWater();renderHabits();renderTasks();renderLang();renderStats();renderBadges();renderWeek();renderSettings();renderNudge();renderLearn();renderAlphaProgress();}
+function renderAll(){renderHeader();renderIntention();renderWater();renderHabits();renderTasks();renderLang();renderStats();renderBadges();renderWeek();renderSettings();renderNudge();renderLearn();renderAlphaProgress();setTimeout(updatePhaseProg,100);}
 
 function renderHeader(){
   const days=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
@@ -1164,6 +1687,7 @@ function showScreen(id,btn){
   document.getElementById('screen-'+id).classList.add('active');
   btn.classList.add('active');
   if(id==='stats'){renderStats();renderWeek();renderBadges();calYear=new Date().getFullYear();calMonth=new Date().getMonth();renderCalendar();}
+  if(id==='lang'){updatePhaseProg();if(currentPhase===1){renderLearn();renderAlphaProgress();}else if(currentPhase===2){renderVocabLearn();renderVocabProgress();}}
   if(id==='alpha'){renderLearn();renderAlphaProgress();}
 }
 

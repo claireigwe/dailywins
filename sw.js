@@ -1,4 +1,4 @@
-const CACHE = 'dailywins-v3';
+const CACHE = 'dailywins-v5';
 const ASSETS = ['/', '/index.html'];
 
 self.addEventListener('install', e => {
