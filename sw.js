@@ -1,8 +1,8 @@
-const CACHE = 'dailywins-v6';
-const ASSETS = ['/', '/index.html'];
+const CACHE = 'dailywins-v7';
+const ASSETS = ['/dailywins/', '/dailywins/index.html', '/dailywins/manifest.json'];
 
 self.addEventListener('install', e => {
-  e.waitUntil(caches.open(CACHE).then(c => c.addAll(ASSETS)));
+  e.waitUntil(caches.open(CACHE).then(c => c.addAll(ASSETS).catch(()=>{})));
   self.skipWaiting();
 });
 
@@ -15,48 +15,55 @@ self.addEventListener('activate', e => {
 
 self.addEventListener('fetch', e => {
   e.respondWith(
-    caches.match(e.request).then(r => r || fetch(e.request).catch(() => caches.match('/index.html')))
+    caches.match(e.request).then(r => r || fetch(e.request).catch(() => caches.match('/dailywins/index.html')))
   );
 });
 
-// ── ALARM: fires a notification at the scheduled wake-up time
+// ── ALARM via message (best-effort — works when app is open or recently used)
 self.addEventListener('message', e => {
-  if (e.data && e.data.type === 'SCHEDULE_ALARM') {
-    const { time, label } = e.data;
-    scheduleAlarm(time, label);
-  }
-  if (e.data && e.data.type === 'CANCEL_ALARM') {
-    if (self._alarmTimer) { clearTimeout(self._alarmTimer); self._alarmTimer = null; }
-  }
+  if (!e.data) return;
+  if (e.data.type === 'SCHEDULE_ALARM') scheduleAlarm(e.data.time, e.data.label);
+  if (e.data.type === 'CANCEL_ALARM') { if (self._alarmTimer) { clearTimeout(self._alarmTimer); self._alarmTimer = null; } }
 });
 
 function scheduleAlarm(timeStr, label) {
   if (self._alarmTimer) clearTimeout(self._alarmTimer);
+  if (!timeStr) return;
   const now = new Date();
   const [h, m] = timeStr.split(':').map(Number);
   const target = new Date(now);
   target.setHours(h, m, 0, 0);
-  if (target <= now) target.setDate(target.getDate() + 1); // schedule for tomorrow if already passed
+  if (target <= now) target.setDate(target.getDate() + 1);
   const delay = target - now;
+  // Only schedule if within 12 hours (SW may be killed beyond that)
+  if (delay > 12 * 60 * 60 * 1000) return;
   self._alarmTimer = setTimeout(() => {
-    self.registration.showNotification('⏰ ' + (label || 'Wake up!'), {
-      body: 'Time to rise and win the day 🌅 Open Daily Wins to log your habits.',
-      icon: '/icons/icon-192.png',
-      badge: '/icons/icon-192.png',
+    self.registration.showNotification('Wake up! — Daily Wins', {
+      body: 'Time to rise and win the day! Open Daily Wins to log your habits.',
+      icon: '/dailywins/icons/icon-192.png',
+      badge: '/dailywins/icons/icon-192.png',
       tag: 'wake-alarm',
       renotify: true,
       requireInteraction: true,
-      actions: [{ action: 'open', title: 'Open App' }]
     });
-    // Reschedule for tomorrow
     scheduleAlarm(timeStr, label);
   }, delay);
 }
+
+// ── Periodic sync (fires when phone is online, even if app is closed)
+self.addEventListener('periodicsync', e => {
+  if (e.tag === 'daily-alarm-check') {
+    e.waitUntil(self.clients.matchAll().then(clients => {
+      // Wake up a client to check alarm
+      if (clients.length > 0) clients[0].postMessage({ type: 'ALARM_CHECK' });
+    }));
+  }
+});
 
 self.addEventListener('notificationclick', e => {
   e.notification.close();
   e.waitUntil(clients.matchAll({ type: 'window' }).then(list => {
     for (const c of list) { if (c.url && 'focus' in c) return c.focus(); }
-    if (clients.openWindow) return clients.openWindow('/');
+    if (clients.openWindow) return clients.openWindow('/dailywins/');
   }));
 });

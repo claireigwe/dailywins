@@ -277,6 +277,46 @@
   .phase-prog-fill.gold{background:var(--gold);}
   .phase-prog-fill.purple{background:var(--purple);}
   .lang-phase-content{animation:fadeUp 0.3s ease;}
+
+  /* ── TIME-OF-DAY THEME ── */
+  body.theme-morning{--gold:#f0c040;--surface:#13131c;--bg:#0a0a0f;}
+  body.theme-evening{--gold:#e07830;--surface:#151020;--bg:#0a0808;}
+  body.theme-night{--gold:#a070ff;--surface:#10101a;--bg:#080810;}
+
+  /* ── END OF DAY REFLECTION ── */
+  .reflection-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px;margin-bottom:20px;display:none;}
+  .reflection-card.show{display:block;animation:fadeUp 0.4s ease;}
+  .reflection-label{font-size:13px;font-weight:600;color:var(--text);margin-bottom:10px;}
+  .reflection-label span{color:var(--gold);}
+  .reflection-opts{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px;}
+  .reflection-opt{background:var(--surface2);border:1px solid var(--border);border-radius:99px;padding:8px 14px;font-size:13px;cursor:pointer;transition:all 0.2s;color:var(--text-dim);}
+  .reflection-opt.selected{border-color:var(--gold);color:var(--gold);background:rgba(240,192,64,0.1);}
+  .reflection-save-btn{width:100%;padding:12px;background:rgba(240,192,64,0.12);border:1px solid rgba(240,192,64,0.4);border-radius:var(--radius-sm);color:var(--gold);font-family:'DM Sans',sans-serif;font-size:14px;font-weight:600;cursor:pointer;transition:all 0.2s;}
+  .reflection-save-btn:active{transform:scale(0.98);}
+  .reflection-done{font-size:13px;color:var(--green);text-align:center;padding:8px;display:none;}
+
+  /* ── WINS CHART ── */
+  .wins-chart{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:20px;}
+  .wins-chart-title{font-size:12px;color:var(--text-dim);text-transform:uppercase;letter-spacing:1px;margin-bottom:14px;}
+  .wins-bars{display:flex;align-items:flex-end;gap:6px;height:80px;}
+  .wins-bar-wrap{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;}
+  .wins-bar{width:100%;border-radius:4px 4px 0 0;background:var(--surface2);transition:height 0.6s cubic-bezier(.4,0,.2,1);min-height:3px;}
+  .wins-bar.has-data{background:var(--gold);}
+  .wins-bar.full{background:var(--green);}
+  .wins-bar-label{font-size:9px;color:var(--text-dim);text-transform:uppercase;}
+  .wins-bar-count{font-size:10px;color:var(--text-dim);font-weight:600;}
+
+  /* ── HABIT CHECK ANIMATION ── */
+  @keyframes habitCheck{0%{transform:scale(1)}40%{transform:scale(1.15)}70%{transform:scale(0.95)}100%{transform:scale(1)}}
+  .habit-item.just-done{animation:habitCheck 0.4s ease;}
+  @keyframes pointsPop{0%{opacity:1;transform:translateY(0) scale(1)}100%{opacity:0;transform:translateY(-40px) scale(1.3)}}
+  .points-pop{position:fixed;font-family:'Bebas Neue',sans-serif;font-size:22px;color:var(--gold);pointer-events:none;z-index:1000;animation:pointsPop 0.9s ease forwards;}
+
+  /* ── ALARM STATUS CARD ── */
+  .alarm-status{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px 14px;margin-top:8px;font-size:12px;color:var(--text-dim);display:none;}
+  .alarm-status.show{display:block;}
+  .alarm-status.active{border-color:rgba(61,220,132,0.4);color:var(--green);}
+  .alarm-status.warn{border-color:rgba(255,165,0,0.4);color:#ffa500;}
   /* MISC */
   #toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--surface);border:1px solid var(--border);border-radius:99px;padding:10px 20px;font-size:13px;font-weight:600;white-space:nowrap;opacity:0;transition:all 0.3s;z-index:1000;pointer-events:none;max-width:90vw;text-align:center;}
   #toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
@@ -382,6 +422,22 @@
         <button class="task-submit-btn" onclick="submitTask()">Add</button>
       </div>
       <div id="taskList" class="task-list"></div>
+      <!-- END OF DAY REFLECTION -->
+      <div class="reflection-card" id="reflectionCard">
+        <div class="reflection-label">🌙 End of day — <span>what helped you win today?</span></div>
+        <div class="reflection-opts" id="reflectionOpts">
+          <div class="reflection-opt" onclick="toggleReflOpt(this)">💪 Worked out</div>
+          <div class="reflection-opt" onclick="toggleReflOpt(this)">🌅 Woke up early</div>
+          <div class="reflection-opt" onclick="toggleReflOpt(this)">🥗 Ate well</div>
+          <div class="reflection-opt" onclick="toggleReflOpt(this)">💧 Stayed hydrated</div>
+          <div class="reflection-opt" onclick="toggleReflOpt(this)">📚 Studied Spanish</div>
+          <div class="reflection-opt" onclick="toggleReflOpt(this)">✅ Cleared my tasks</div>
+          <div class="reflection-opt" onclick="toggleReflOpt(this)">😴 Slept well</div>
+          <div class="reflection-opt" onclick="toggleReflOpt(this)">🧘 Stayed calm</div>
+        </div>
+        <button class="reflection-save-btn" onclick="saveReflection()">Save reflection ✓</button>
+        <div class="reflection-done" id="reflectionDone">✅ Reflection saved! See you tomorrow.</div>
+      </div>
       <div class="section-title">🌍 <span>LANGUAGE</span> CHALLENGE</div>
       <div class="lang-card">
         <div class="lang-card-header">
@@ -536,6 +592,11 @@
         <div class="stat-box"><div class="stat-val blue" id="sTotalPoints">0</div><div class="stat-label">Total Points</div></div>
         <div class="stat-box"><div class="stat-val purple" id="sLetters">0</div><div class="stat-label">Letters Mastered</div></div>
       </div>
+      <div class="section-title">📈 WINS PER <span>WEEK</span></div>
+      <div class="wins-chart">
+        <div class="wins-chart-title">Habits completed per day — last 7 days</div>
+        <div class="wins-bars" id="winsBars"></div>
+      </div>
       <div class="section-title">THIS <span>WEEK</span></div>
       <div class="week-row" id="weekLabels"></div>
       <div class="week-row" id="weekCells"></div>
@@ -581,6 +642,7 @@
         <div><div class="setting-label">Alarm time</div><div class="setting-sub">Notified at this time every day</div></div>
         <input type="time" id="wakeTime" value="06:00" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:8px 12px;border-radius:var(--radius-sm);font-family:'DM Sans',sans-serif;font-size:14px;" onchange="saveAlarmTime()"/>
       </div>
+      <div class="alarm-status" id="alarmStatus"></div>
       <div class="setting-row">
         <div><div class="setting-label">Notifications</div><div class="setting-sub">Daily habit reminders</div></div>
         <div class="toggle" id="notifToggle" onclick="toggleNotif()"></div>
@@ -1158,20 +1220,36 @@ function confetti(){
 // ════════════════════════════════════
 //  RENDER
 // ════════════════════════════════════
-function renderAll(){renderHeader();renderIntention();renderWater();renderHabits();renderTasks();renderLang();renderStats();renderBadges();renderWeek();renderSettings();renderNudge();renderLearn();renderAlphaProgress();setTimeout(updatePhaseProg,100);}
+function safeRun(fn){try{fn();}catch(e){console.warn('render error in '+fn.name+':',e);}}
+function $id(id){return document.getElementById(id);}
+function setText(id,val){const el=$id(id);if(el)el.textContent=val;}
+function setHtml(id,val){const el=$id(id);if(el)el.innerHTML=val;}
+function setStyle(id,prop,val){const el=$id(id);if(el)el.style[prop]=val;}
+function setVal(id,val){const el=$id(id);if(el)el.value=val;}
+function setCls(id,val){const el=$id(id);if(el)el.className=val;}
+function renderAll(){
+  applyTimeTheme();
+  safeRun(renderHeader);safeRun(renderIntention);safeRun(renderWater);
+  safeRun(renderHabits);safeRun(renderTasks);safeRun(renderLang);
+  safeRun(renderStats);safeRun(renderBadges);safeRun(renderWeek);
+  safeRun(renderSettings);safeRun(renderNudge);safeRun(renderLearn);
+  safeRun(renderAlphaProgress);safeRun(renderReflection);
+  setTimeout(updatePhaseProg,100);
+}
 
 function renderHeader(){
   const days=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
   const months=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
   const d=new Date();
-  document.getElementById('hDate').textContent=`${days[d.getDay()]}, ${months[d.getMonth()]} ${d.getDate()}`;
+  setText('hDate',days[d.getDay()]+', '+months[d.getMonth()]+' '+d.getDate());
   const h=d.getHours();
-  document.getElementById('hGreeting').textContent=h<12?'Good morning ☀️':h<17?'Good afternoon 🌤':h<20?'Good evening 🌆':'Good night 🌙';
-  document.getElementById('streakNum').textContent=state.streak;
-  document.getElementById('pointsNum').textContent=state.totalPoints;
-  document.getElementById('xpBar').style.width=(getLvlProg(state.totalPoints)*100)+'%';
-  document.getElementById('xpLabel').textContent=state.totalPoints+' XP';
-  document.getElementById('levelLabel').textContent='Level '+getLevel(state.totalPoints);
+  setText('hGreeting',h<12?'Good morning ☀️':h<17?'Good afternoon 🌤':h<20?'Good evening 🌆':'Good night 🌙');
+  setText('streakNum',state.streak);
+  setText('pointsNum',state.totalPoints);
+  const prog=getLvlProg(state.totalPoints);
+  setStyle('xpBar','width',(prog*100)+'%');
+  setText('xpLabel',state.totalPoints+' XP');
+  setText('levelLabel','Level '+getLevel(state.totalPoints));
 }
 
 function renderHabits(){
@@ -1180,7 +1258,7 @@ function renderHabits(){
     const done=!!todayData.done[h.id];
     const el=document.createElement('div');el.className='habit-item'+(done?' done':'');
     el.innerHTML=`<div class="habit-icon">${h.icon}</div><div class="habit-info"><div class="habit-name">${h.name}</div><div class="habit-sub">${h.sub}</div><div class="habit-pts">+${h.pts} pts</div></div><div class="habit-check">${done?'✓':''}</div>`;
-    el.addEventListener('click',()=>toggleHabit(h.id,h.pts));
+    el.addEventListener('click',(e)=>toggleHabitAnimated(h.id,h.pts,e.currentTarget));
     list.appendChild(el);
   });
   document.getElementById('allDoneBanner').classList.toggle('show',HABITS.every(h=>todayData.done[h.id]));
@@ -1435,6 +1513,7 @@ function checkBadges(){
 // ════════════════════════════════════
 function renderSettings(){
   document.getElementById('langSelect').value=state.settings.lang;
+  renderAlarmStatus();
   document.getElementById('wakeTime').value=state.settings.wakeTime||'06:00';
   document.getElementById('notifToggle').className='toggle'+(state.settings.notif?' on':'');
   document.getElementById('soundToggle').className='toggle'+(state.settings.sound?' on':'');
@@ -1679,6 +1758,168 @@ function deleteTask(i){
   saveState();renderTasks();
 }
 
+
+// ════════════════════════════════════
+//  TIME-OF-DAY THEME
+// ════════════════════════════════════
+function applyTimeTheme(){
+  const h=new Date().getHours();
+  const body=document.body;
+  body.classList.remove('theme-morning','theme-evening','theme-night');
+  if(h>=5&&h<12) body.classList.add('theme-morning');
+  else if(h>=12&&h<20) body.classList.add('theme-evening');
+  else body.classList.add('theme-night');
+}
+
+// ════════════════════════════════════
+//  POINTS POP ANIMATION
+// ════════════════════════════════════
+function showPointsPop(pts, el){
+  const pop=document.createElement('div');
+  pop.className='points-pop';
+  pop.textContent='+'+pts;
+  const r=el?el.getBoundingClientRect():{top:300,left:180};
+  pop.style.cssText='left:'+(r.left+r.width/2-20)+'px;top:'+(r.top-10)+'px;';
+  document.body.appendChild(pop);
+  setTimeout(()=>pop.remove(),900);
+}
+
+// ════════════════════════════════════
+//  END OF DAY REFLECTION
+// ════════════════════════════════════
+function renderReflection(){
+  const card=$id('reflectionCard');
+  if(!card)return;
+  const h=new Date().getHours();
+  // Show after 6pm
+  if(h<18){card.classList.remove('show');return;}
+  // Already saved today?
+  if(todayData.reflection&&todayData.reflection.saved){
+    card.classList.add('show');
+    const done=$id('reflectionDone');
+    if(done){done.style.display='block';}
+    const btn=card.querySelector('.reflection-save-btn');
+    if(btn)btn.style.display='none';
+    return;
+  }
+  card.classList.add('show');
+}
+function toggleReflOpt(el){
+  el.classList.toggle('selected');
+}
+function saveReflection(){
+  const selected=[...document.querySelectorAll('.reflection-opt.selected')].map(el=>el.textContent);
+  if(!selected.length){toast('Pick at least one!','',2000);return;}
+  todayData.reflection={saved:true,items:selected,ts:Date.now()};
+  saveState();
+  const done=$id('reflectionDone');if(done)done.style.display='block';
+  const btn=document.querySelector('.reflection-save-btn');if(btn)btn.style.display='none';
+  toast('Reflection saved! 🌙 Great day.','green',3000);
+  state.totalPoints+=10;
+  renderHeader();
+}
+
+// ════════════════════════════════════
+//  WINS PER WEEK CHART
+// ════════════════════════════════════
+function renderWinsChart(){
+  const bars=$id('winsBars');
+  if(!bars)return;
+  bars.innerHTML='';
+  const days=['S','M','T','W','T','F','S'];
+  const TOTAL=4; // total habits
+  for(let i=6;i>=0;i--){
+    const d=new Date();d.setDate(d.getDate()-i);
+    const key=d.toISOString().slice(0,10);
+    const dd=state.days[key];
+    const done=dd?Object.values(dd.done||{}).filter(Boolean).length:0;
+    const pct=TOTAL>0?done/TOTAL:0;
+    const wrap=document.createElement('div');
+    wrap.className='wins-bar-wrap';
+    const bar=document.createElement('div');
+    bar.className='wins-bar'+(done>0?(done===TOTAL?' full':' has-data'):'');
+    bar.style.height=Math.max(3,Math.round(pct*80))+'px';
+    const lbl=document.createElement('div');
+    lbl.className='wins-bar-label';
+    lbl.textContent=days[d.getDay()];
+    const cnt=document.createElement('div');
+    cnt.className='wins-bar-count';
+    cnt.textContent=done>0?done:'';
+    wrap.appendChild(bar);wrap.appendChild(lbl);wrap.appendChild(cnt);
+    bars.appendChild(wrap);
+  }
+}
+
+// ════════════════════════════════════
+//  ALARM — RELIABLE FIX
+// ════════════════════════════════════
+// Service worker timers die when phone sleeps.
+// Real fix: use a visible in-app check + notification on open.
+function checkAlarmOnOpen(){
+  if(!state.settings.alarm||!state.settings.wakeTime)return;
+  const [h,m]=state.settings.wakeTime.split(':').map(Number);
+  const now=new Date();
+  const target=new Date();target.setHours(h,m,0,0);
+  // If within 30 min window of alarm time and notification permission granted
+  const diff=Math.abs(now-target);
+  if(diff<30*60*1000&&Notification.permission==='granted'){
+    const key='alarm_fired_'+todayKey();
+    if(!localStorage.getItem(key)){
+      localStorage.setItem(key,'1');
+      new Notification('⏰ Wake up! — Daily Wins',{
+        body:'Time to rise and win the day! 🌅',
+        icon:window.location.origin+'/dailywins/icons/icon-192.png',
+        tag:'wake-alarm',
+        requireInteraction:true,
+      });
+    }
+  }
+  // Also try scheduling via SW
+  scheduleAlarmSW();
+  renderAlarmStatus();
+}
+
+function renderAlarmStatus(){
+  const el=$id('alarmStatus');
+  if(!el)return;
+  if(!state.settings.alarm){el.className='alarm-status';el.textContent='';return;}
+  if(Notification.permission!=='granted'){
+    el.className='alarm-status show warn';
+    el.textContent='⚠️ Notifications are blocked — alarm cannot fire. Please enable notifications in your phone settings for this site.';
+    return;
+  }
+  el.className='alarm-status show active';
+  el.textContent='✅ Alarm set for '+formatTime(state.settings.wakeTime)+' — open the app before your alarm time for best results on mobile.';
+}
+
+// ════════════════════════════════════
+//  HABIT CHECK — BETTER ANIMATION
+// ════════════════════════════════════
+function toggleHabitAnimated(id, pts, el){
+  if(todayData.done[id]){
+    todayData.done[id]=false;
+    state.totalPoints=Math.max(0,state.totalPoints-pts);
+    toast('Habit unchecked');
+    saveState();renderHabits();renderHeader();return;
+  }
+  todayData.done[id]=true;
+  state.totalPoints+=pts;
+  beep('ok');
+  showPointsPop(pts,el);
+  // animate the item
+  const item=el?el.closest('.habit-item'):null;
+  if(item){item.classList.add('just-done');setTimeout(()=>item.classList.remove('just-done'),400);}
+  const msgs={wake:'Early bird! 🌅',workout:'Gains made! 💪',eat:'Eating clean! 🥗',lang:'Language XP! 🌍'};
+  toast('+'+(pts)+' pts — '+(msgs[id]||'Done!'),'gold');
+  const allDone=HABITS.every(h=>todayData.done[h.id]);
+  if(allDone){
+    state.streak++;if(state.streak>state.bestStreak)state.bestStreak=state.streak;
+    state.perfectDays++;setTimeout(confetti,200);
+    toast('🔥 PERFECT DAY! Streak: '+state.streak,'green',4000);
+  }
+  saveState();renderHabits();renderHeader();checkBadges();
+}
+
 // ════════════════════════════════════
 //  NAV
 // ════════════════════════════════════
@@ -1687,7 +1928,7 @@ function showScreen(id,btn){
   document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
   document.getElementById('screen-'+id).classList.add('active');
   btn.classList.add('active');
-  if(id==='stats'){renderStats();renderWeek();renderBadges();calYear=new Date().getFullYear();calMonth=new Date().getMonth();renderCalendar();}
+  if(id==='stats'){renderStats();renderWeek();renderBadges();renderWinsChart();calYear=new Date().getFullYear();calMonth=new Date().getMonth();renderCalendar();}
   if(id==='lang'){updatePhaseProg();if(currentPhase===1){renderLearn();renderAlphaProgress();}else if(currentPhase===2){renderVocabLearn();renderVocabProgress();}}
   if(id==='alpha'){renderLearn();renderAlphaProgress();}
 }
@@ -1701,7 +1942,15 @@ if('speechSynthesis' in window){
 }
 try { renderAll(); } catch(e){ console.error('renderAll error:', e); }
 if('serviceWorker' in navigator){
-  navigator.serviceWorker.register('sw.js').then(()=>{
+  navigator.serviceWorker.register('sw.js').then(reg=>{
+    // Try to register periodic background sync for alarm reliability
+    if('periodicSync' in reg){
+      reg.periodicSync.register('daily-alarm-check',{minInterval:60*60*1000}).catch(()=>{});
+    }
+    // Listen for alarm check messages from SW
+    navigator.serviceWorker.addEventListener('message',e=>{
+      if(e.data&&e.data.type==='ALARM_CHECK') checkAlarmOnOpen();
+    });
     // Re-schedule alarm on every app open so it survives SW restarts
     if(state.settings.alarm&&state.settings.wakeTime){
       setTimeout(scheduleAlarmSW, 1000);
