@@ -166,10 +166,13 @@ async function signUp(email, password, name) {
     const result = await runMutation("auth.signUp", { email, password, name });
     
     if (result.success) {
+      console.log('SignUp succeeded, token:', result.token ? 'present' : 'missing');
       storeToken(result.token);
       currentUser = { _id: result.userId, email, name, onboardingComplete: false };
       authState = AUTH_STATES.ONBOARDING;
+      console.log('Calling notifyAuthChange, authState:', authState);
       notifyAuthChange();
+      console.log('notifyAuthChange called');
     }
     
     return result;
