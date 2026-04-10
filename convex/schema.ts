@@ -67,6 +67,8 @@ export default defineSchema({
     text: v.string(),
     done: v.boolean(),
     points: v.number(),
+    recurring: v.boolean(), // true = appears every day (from onboarding)
+    scheduledDate: v.optional(v.string()), // YYYY-MM-DD for one-off tasks
     createdAt: v.number(),
     completedAt: v.optional(v.number()),
   })
