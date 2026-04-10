@@ -2168,12 +2168,27 @@ function renderAlarmStatus(){
 //  HABIT CHECK — BETTER ANIMATION
 // ════════════════════════════════════
 function toggleHabitAnimated(id, pts, el){
-  if(todayData.done[id]){
+  const wasDone = todayData.done[id];
+  
+  if(wasDone){
     todayData.done[id]=false;
     state.totalPoints=Math.max(0,state.totalPoints-pts);
     toast('Habit unchecked');
-    saveState();renderHabits();renderHeader();return;
+    saveState();renderHabits();renderHeader();
+    // Sync to Convex
+    const token = localStorage.getItem('dw_token');
+    if (token && window.runMutation) {
+      const today = new Date().toISOString().slice(0,10);
+      window.runMutation("habits.logHabitCompletion", { 
+        token, 
+        habitId: id, 
+        date: today, 
+        completed: false 
+      }).catch(e => console.error('Failed to sync habit uncheck:', e));
+    }
+    return;
   }
+  
   todayData.done[id]=true;
   state.totalPoints+=pts;
   beep('ok');
@@ -2193,6 +2208,18 @@ function toggleHabitAnimated(id, pts, el){
     toast('🔥 PERFECT DAY! Streak: '+state.streak,'green',4000);
   }
   saveState();renderHabits();renderHeader();checkBadges();
+  
+  // Sync to Convex
+  const token = localStorage.getItem('dw_token');
+  if (token && window.runMutation) {
+    const today = new Date().toISOString().slice(0,10);
+    window.runMutation("habits.logHabitCompletion", { 
+      token, 
+      habitId: id, 
+      date: today, 
+      completed: true 
+    }).catch(e => console.error('Failed to sync habit:', e));
+  }
 }
 
 // ════════════════════════════════════

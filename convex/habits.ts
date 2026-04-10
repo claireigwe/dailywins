@@ -41,6 +41,46 @@ export const getHabitLogs = query({
   },
 });
 
+export const logHabitCompletion = mutation({
+  args: { token: v.string(), habitId: v.id("habits"), date: v.string(), completed: v.boolean() },
+  handler: async (ctx, args) => {
+    const credentials = await ctx.db.query("credentials").collect();
+    const credential = credentials.find(
+      (c: any) => c.sessionToken === args.token
+    );
+    
+    if (!credential) throw new Error("Invalid session");
+    if (credential.sessionExpiry < Date.now()) throw new Error("Session expired");
+    
+    // Find existing log for this habit on this date
+    const existing = await ctx.db
+      .query("habitLogs")
+      .withIndex("by_user_date", (q) => 
+        q.eq("userId", credential.userId).eq("date", args.date)
+      )
+      .collect();
+    
+    const existingLog = existing.find(l => l.habitId === args.habitId);
+    
+    if (args.completed) {
+      if (!existingLog) {
+        await ctx.db.insert("habitLogs", {
+          userId: credential.userId,
+          habitId: args.habitId,
+          date: args.date,
+          completedAt: Date.now(),
+        });
+      }
+    } else {
+      if (existingLog) {
+        await ctx.db.delete(existingLog._id);
+      }
+    }
+    
+    return { success: true };
+  },
+});
+
 export const listHabits = query({
   args: {},
   handler: async (ctx) => {
