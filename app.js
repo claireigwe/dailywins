@@ -4,7 +4,7 @@
 
 const CONVEX_URL = "https://perfect-chicken-357.eu-west-1.convex.cloud";
 
-let convex = null;
+let convexClient = null;
 let api = null;
 let connectionFailed = false;
 
@@ -15,7 +15,7 @@ function waitForConvex() {
     }, 10000);
     
     function check() {
-      if (window.Convex) {
+      if (window.convex && window.convex.ConvexClient) {
         clearTimeout(timeout);
         resolve();
       } else {
@@ -29,8 +29,8 @@ function waitForConvex() {
 async function initConvex() {
   try {
     await waitForConvex();
-    convex = new window.Convex.ConvexClient(CONVEX_URL);
-    api = window.Convex.api;
+    convexClient = new window.convex.ConvexClient(CONVEX_URL);
+    api = window.convex.anyApi;
     console.log('Convex connected successfully');
     return true;
   } catch (err) {
@@ -41,7 +41,7 @@ async function initConvex() {
 }
 
 function isConnected() {
-  return !connectionFailed && convex !== null;
+  return !connectionFailed && convexClient !== null;
 }
 
 // ════════════════════════════════════
@@ -96,19 +96,19 @@ async function initAuth() {
 }
 
 async function runMutation(mutationPath, args) {
-  if (!convex || !api) throw new Error('Convex not connected');
+  if (!convexClient || !api) throw new Error('Convex not connected');
   const [module, func] = mutationPath.split(".");
   const mutation = api[module]?.[func];
   if (!mutation) throw new Error(`Mutation ${mutationPath} not found`);
-  return convex.mutation(mutation, args || {});
+  return convexClient.mutation(mutation, args || {});
 }
 
 async function runQuery(queryPath, args) {
-  if (!convex || !api) throw new Error('Convex not connected');
+  if (!convexClient || !api) throw new Error('Convex not connected');
   const [module, func] = queryPath.split(".");
   const query = api[module]?.[func];
   if (!query) throw new Error(`Query ${queryPath} not found`);
-  return convex.query(query, args || {});
+  return convexClient.query(query, args || {});
 }
 
 async function checkAuth() {
