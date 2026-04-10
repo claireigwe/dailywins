@@ -227,6 +227,44 @@ async function logOut() {
   return { success: true };
 }
 
+function logoutUser() {
+  logOut().then(() => {
+    document.getElementById('auth-screen').style.display = 'flex';
+    document.getElementById('onboarding-container').style.display = 'none';
+    appInitialized = false;
+  });
+}
+
+function toggleTheme() {
+  const html = document.documentElement;
+  const currentTheme = html.getAttribute('data-theme');
+  const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+  html.setAttribute('data-theme', newTheme);
+  
+  if (typeof state !== 'undefined') {
+    state.settings = state.settings || {};
+    state.settings.theme = newTheme;
+    saveState();
+  }
+  
+  const toggleEl = document.getElementById('themeToggle');
+  if (toggleEl) {
+    toggleEl.className = 'toggle' + (newTheme === 'light' ? ' on' : '');
+  }
+}
+
+function initTheme() {
+  const savedTheme = localStorage.getItem('theme');
+  if (savedTheme) {
+    document.documentElement.setAttribute('data-theme', savedTheme);
+  }
+  const toggleEl = document.getElementById('themeToggle');
+  if (toggleEl) {
+    const currentTheme = document.documentElement.getAttribute('data-theme');
+    toggleEl.className = 'toggle' + (currentTheme === 'light' ? ' on' : '');
+  }
+}
+
 async function completeOnboarding(habits, waterGoal, language) {
   if (!isConnected()) throw new Error("Cannot connect to server");
   const token = getStoredToken();
@@ -924,6 +962,9 @@ async function loadUserDataFromConvex() {
       state.totalDays = user.totalDays || 0;
       state.settings = state.settings || {};
       state.settings.lang = user.language || 'spanish';
+      if (state.settings.theme) {
+        document.documentElement.setAttribute('data-theme', state.settings.theme);
+      }
       console.log('State updated, totalPoints preserved from localStorage:', state.totalPoints);
     }
     
