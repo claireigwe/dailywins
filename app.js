@@ -801,7 +801,13 @@ async function initApp() {
   console.log('Auth initialized');
   
   try {
-    const { state, user } = await checkAuth();
+    // Add timeout to prevent hanging
+    const timeoutPromise = new Promise((_, reject) => 
+      setTimeout(() => reject(new Error('Auth check timeout')), 10000)
+    );
+    
+    const authPromise = checkAuth();
+    const { state, user } = await Promise.race([authPromise, timeoutPromise]);
     console.log('Auth checked, state:', state, 'user:', user);
     
     hideLoading();
@@ -821,8 +827,12 @@ async function initApp() {
     if (state === AUTH_STATES.LOGGED_IN && user) {
       const screen = document.getElementById('auth-screen');
       if (screen) screen.style.display = 'none';
-      await initStore();
-      renderAll();
+      // Load user data and render
+      await loadUserDataFromConvex();
+      if (typeof renderHabits === 'function') renderHabits();
+      if (typeof renderWater === 'function') renderWater();
+      if (typeof renderHeader === 'function') renderHeader();
+      if (typeof renderLang === 'function') renderLang();
       appInitialized = true;
       return;
     }
@@ -877,13 +887,14 @@ onAuthChange((state, user) => {
 
 async function loadUserDataFromConvex() {
   try {
-    console.log('Loading user data from Convex...');
+    console.log('loadUserDataFromConvex starting...');
     const token = getStoredToken();
     if (!token) {
       console.log('No token found');
       return;
     }
     
+    console.log('Fetching user data...');
     const user = await runQuery("users.getUserData", { token });
     console.log('User data:', user);
     if (!user) return;
@@ -898,6 +909,7 @@ async function loadUserDataFromConvex() {
       console.log('State updated');
     }
     
+    console.log('Fetching habits...');
     const habits = await runQuery("habits.getHabits", { token });
     console.log('Habits from Convex:', habits);
     
@@ -906,7 +918,7 @@ async function loadUserDataFromConvex() {
     window.WATER_GOAL = user.waterGoal || 8;
     console.log('WATER_GOAL set to:', window.WATER_GOAL);
     
-    console.log('User data loaded from Convex');
+    console.log('loadUserDataFromConvex complete');
   } catch (error) {
     console.error('Failed to load user data:', error);
   }
