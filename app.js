@@ -844,6 +844,8 @@ async function initApp() {
       if (typeof renderWater === 'function') renderWater();
       if (typeof renderHeader === 'function') renderHeader();
       if (typeof renderLang === 'function') renderLang();
+      if (typeof renderTasks === 'function') renderTasks();
+      if (typeof renderAll === 'function') renderAll();
       appInitialized = true;
       return;
     }
@@ -890,6 +892,7 @@ onAuthChange((state, user) => {
         if (typeof renderWater === 'function') renderWater();
         if (typeof renderHeader === 'function') renderHeader();
         if (typeof renderLang === 'function') renderLang();
+        if (typeof renderTasks === 'function') renderTasks();
         appInitialized = true;
       });
     }
