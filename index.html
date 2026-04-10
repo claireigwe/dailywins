@@ -148,7 +148,7 @@
   .task-item.done{border-color:var(--green);background:rgba(61,220,132,0.08);}
   .task-icon{font-size:28px;width:42px;height:42px;display:flex;align-items:center;justify-content:center;border-radius:12px;background:var(--surface2);flex-shrink:0;}
   .task-item.done .task-icon{background:rgba(61,220,132,0.15);}
-  .task-info{flex:1;}
+  .task-info{flex:1;position:relative;padding-right:30px;}
   .task-name{font-size:15px;font-weight:600;}
   .task-sub{font-size:12px;color:var(--text-dim);margin-top:2px;}
   .task-item.done .task-name{color:var(--green);}
@@ -156,8 +156,7 @@
   .task-item.done .task-check{background:var(--green);border-color:var(--green);}
   .task-pts{font-size:11px;color:var(--gold);font-weight:700;margin-top:3px;}
   .task-item.done .task-name{color:var(--green);}
-  .task-delete{position:absolute;right:12px;top:50%;transform:translateY(-50%);background:rgba(255,85,96,0.1);border:none;color:var(--red);font-size:14px;padding:6px 10px;border-radius:6px;cursor:pointer;opacity:0;transition:opacity 0.2s;}
-  .task-item{position:relative;}
+  .task-delete{position:absolute;right:0;top:50%;transform:translateY(-50%);background:rgba(255,85,96,0.1);border:none;color:var(--red);font-size:12px;padding:6px 8px;border-radius:6px;cursor:pointer;opacity:0;transition:opacity 0.2s;}
   .task-item:hover .task-delete{opacity:1;}
 
   /* ── DAILY INTENTION ── */
@@ -1956,12 +1955,19 @@ function renderTasks(){
       <div class="task-info">
         <div class="task-name${t.done?' done':''}">${escHtml(t.text)}</div>
         ${t.recurring?'<div class="task-sub">Daily</div>':''}
-        ${!t.done?'<div class="task-pts">+10 pts</div>':''}
       </div>
       <div class="task-check" onclick="toggleTask(${i})">${t.done?'✓':''}</div>
-      <button class="task-delete" onclick="event.stopPropagation();deleteTask(${i})">✕</button>
     `;
-    el.addEventListener('click',(e)=>toggleTask(i));
+    el.addEventListener('click',(e)=>{
+      if(e.target.classList.contains('task-delete'))return;
+      toggleTask(i);
+    });
+    // Delete button inside info area
+    const deleteBtn=document.createElement('button');
+    deleteBtn.className='task-delete';
+    deleteBtn.textContent='✕';
+    deleteBtn.onclick=(e)=>{e.stopPropagation();deleteTask(i);};
+    el.querySelector('.task-info').appendChild(deleteBtn);
     list.appendChild(el);
   });
 }
