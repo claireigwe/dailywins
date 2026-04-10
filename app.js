@@ -226,7 +226,9 @@ async function logOut() {
 
 async function completeOnboarding(habits, waterGoal, language) {
   if (!isConnected()) throw new Error("Cannot connect to server");
-  await runMutation("users.completeOnboarding", { habits, waterGoal, language });
+  const token = getStoredToken();
+  if (!token) throw new Error("Not authenticated");
+  await runMutation("users.completeOnboarding", { token, habits, waterGoal, language });
 }
 
 // ════════════════════════════════════

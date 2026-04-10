@@ -90,6 +90,7 @@ export const createUser = mutation({
 
 export const completeOnboarding = mutation({
   args: {
+    token: v.string(),
     habits: v.array(
       v.object({
         name: v.string(),
@@ -102,14 +103,20 @@ export const completeOnboarding = mutation({
     language: v.string(),
   },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Unauthenticated");
-
-    const user = await ctx.db
-      .query("users")
-      .withIndex("by_email", (q) => q.eq("email", identity.email!))
-      .unique();
-
+    const credentials = await ctx.db.query("credentials").collect();
+    const credential = credentials.find(
+      (c: any) => c.sessionToken === args.token
+    );
+    
+    if (!credential) {
+      throw new Error("Invalid session");
+    }
+    
+    if (credential.sessionExpiry < Date.now()) {
+      throw new Error("Session expired");
+    }
+    
+    const user = await ctx.db.get(credential.userId);
     if (!user) throw new Error("User not found");
 
     await ctx.db.patch(user._id, {
