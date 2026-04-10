@@ -429,7 +429,7 @@ function renderStep(step) {
 
 function renderWelcomeStep() {
   return `
-    <div class="onboarding-step active">
+    <div class="onboarding-step active" style="display:block !important; background: #ff0000;">
       <div class="onboarding-icon">🏆</div>
       <h2>Daily Wins</h2>
       <p>Build lasting habits and track your daily wins. Let's set up your personalized experience.</p>
