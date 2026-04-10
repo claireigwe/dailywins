@@ -1944,6 +1944,7 @@ function calNav(dir){
 function renderTasks(){
   const list=document.getElementById('taskList');
   const tasks=state.tasks||[];
+  console.log('renderTasks called, tasks:', tasks);
   list.innerHTML='';
   if(tasks.length===0)return;
   tasks.forEach((t,i)=>{
@@ -1960,6 +1961,7 @@ function renderTasks(){
     `;
     el.addEventListener('click',(e)=>{
       if(e.target.classList.contains('task-delete')||e.target.closest('.task-delete'))return;
+      console.log('Click on task index:', i);
       toggleTask(i);
     });
     list.appendChild(el);
@@ -1992,18 +1994,28 @@ function submitTaskFromModal(){
 }
 
 function toggleTask(i){
-  if(!state.tasks)return;
+  console.log('toggleTask called with index:', i);
+  if(!state.tasks) {
+    console.log('No tasks found');
+    return;
+  }
   const t=state.tasks[i];
+  console.log('Task:', t);
   if(!t.done){
     t.done=true;
     state.totalPoints+=10;
     beep('ok');
     toast('+10 pts — task complete! ✅','gold');
-    saveState();renderTasks();renderHeader();checkBadges();
+    saveState();
+    renderTasks();
+    renderHeader();
+    checkBadges();
   } else {
     t.done=false;
     state.totalPoints=Math.max(0,state.totalPoints-10);
-    saveState();renderTasks();renderHeader();
+    saveState();
+    renderTasks();
+    renderHeader();
   }
 }
 
