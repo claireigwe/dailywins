@@ -346,7 +346,7 @@ async function removeWaterDeprecated() {
   return result;
 }
 
-async function removeWater() {
+async function removeWaterDeprecated() {
   const today = new Date().toISOString().slice(0, 10);
   const result = await runMutation("water.removeWater", { date: today });
   updateState("water", { glasses: result.glasses, goal: result.goal });
