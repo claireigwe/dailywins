@@ -326,7 +326,8 @@ async function createTask(text) {
   await initStore();
 }
 
-async function toggleTask(taskId) {
+// Deprecated - using local-only task toggle
+async function toggleTaskDeprecated(taskId) {
   await runMutation("tasks.toggleTask", { taskId });
   await initStore();
 }
