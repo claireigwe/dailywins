@@ -2134,10 +2134,13 @@ function toggleHabitAnimated(id, pts, el){
 //  NAV
 // ════════════════════════════════════
 function showScreen(id,btn){
+  console.log('showScreen called:', id);
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
-  document.getElementById('screen-'+id).classList.add('active');
-  btn.classList.add('active');
+  const targetScreen = document.getElementById('screen-'+id);
+  console.log('Target screen found:', !!targetScreen);
+  if (targetScreen) targetScreen.classList.add('active');
+  if (btn) btn.classList.add('active');
   if(id==='stats'){renderStats();renderWeek();renderBadges();renderWinsChart();calYear=new Date().getFullYear();calMonth=new Date().getMonth();renderCalendar();}
   if(id==='lang'){updatePhaseProg();if(currentPhase===1){renderLearn();renderAlphaProgress();}else if(currentPhase===2){renderVocabLearn();renderVocabProgress();}}
   if(id==='alpha'){renderLearn();renderAlphaProgress();}
