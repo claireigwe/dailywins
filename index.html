@@ -1860,6 +1860,7 @@ function renderWater(){
   }
 }
 function addWater(){
+  console.log('addWater called, WATER_GOAL:', window.WATER_GOAL);
   const waterGoal = window.WATER_GOAL || 8;
   if(!todayData.water)todayData.water=0;
   if(todayData.water>=waterGoal){toast('You hit your water goal! 💧','blue');return;}
