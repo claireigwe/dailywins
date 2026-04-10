@@ -690,6 +690,9 @@ function setupOnboardingHandlers(container) {
       btn.disabled = true;
       
       try {
+        console.log("Selected template:", selectedTemplate);
+        console.log("Custom habits before processing:", customHabits);
+        
         if (selectedTemplate === "custom") {
           const inputs = container.querySelectorAll(".custom-habit-input");
           customHabits = Array.from(inputs).map((input) => ({
@@ -699,6 +702,10 @@ function setupOnboardingHandlers(container) {
             points: 20,
           })).filter((h) => h.name.trim());
         }
+        
+        console.log("Custom habits after processing:", customHabits);
+        console.log("Water goal:", waterGoal);
+        console.log("Language:", selectedLanguage);
         
         await completeOnboarding(customHabits, waterGoal, selectedLanguage);
         
