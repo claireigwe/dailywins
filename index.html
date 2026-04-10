@@ -148,7 +148,7 @@
   .task-item.done{border-color:var(--green);background:rgba(61,220,132,0.08);}
   .task-icon{font-size:28px;width:42px;height:42px;display:flex;align-items:center;justify-content:center;border-radius:12px;background:var(--surface2);flex-shrink:0;}
   .task-item.done .task-icon{background:rgba(61,220,132,0.15);}
-  .task-info{flex:1;position:relative;padding-right:30px;}
+  .task-info{flex:1;position:relative;padding-right:36px;}
   .task-name{font-size:15px;font-weight:600;}
   .task-sub{font-size:12px;color:var(--text-dim);margin-top:2px;}
   .task-item.done .task-name{color:var(--green);}
@@ -156,7 +156,7 @@
   .task-item.done .task-check{background:var(--green);border-color:var(--green);}
   .task-pts{font-size:11px;color:var(--gold);font-weight:700;margin-top:3px;}
   .task-item.done .task-name{color:var(--green);}
-  .task-delete{position:absolute;right:0;top:50%;transform:translateY(-50%);background:rgba(255,85,96,0.15);border:none;color:var(--red);font-size:12px;padding:6px 8px;border-radius:6px;cursor:pointer;opacity:1;}
+  .task-delete{position:absolute;right:0;top:0;background:rgba(255,85,96,0.15);border:none;color:var(--red);font-size:12px;padding:4px 8px;border-radius:4px;cursor:pointer;opacity:1;}
 
   /* ── DAILY INTENTION ── */
   .intention-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:20px;}
@@ -1954,19 +1954,14 @@ function renderTasks(){
       <div class="task-info">
         <div class="task-name${t.done?' done':''}">${escHtml(t.text)}</div>
         ${t.recurring?'<div class="task-sub">Daily</div>':''}
+        <button class="task-delete" onclick="deleteTask(${i})">✕</button>
       </div>
-      <div class="task-check" onclick="toggleTask(${i})">${t.done?'✓':''}</div>
+      <div class="task-check">${t.done?'✓':''}</div>
     `;
     el.addEventListener('click',(e)=>{
-      if(e.target.classList.contains('task-delete'))return;
+      if(e.target.classList.contains('task-delete')||e.target.closest('.task-delete'))return;
       toggleTask(i);
     });
-    // Delete button inside info area
-    const deleteBtn=document.createElement('button');
-    deleteBtn.className='task-delete';
-    deleteBtn.textContent='✕';
-    deleteBtn.onclick=(e)=>{e.stopPropagation();deleteTask(i);};
-    el.querySelector('.task-info').appendChild(deleteBtn);
     list.appendChild(el);
   });
 }
@@ -2010,16 +2005,6 @@ function toggleTask(i){
     state.totalPoints=Math.max(0,state.totalPoints-10);
     saveState();renderTasks();renderHeader();
   }
-}
-
-function deleteTask(i){
-  if(!state.tasks)return;
-  const t=state.tasks[i];
-  if(t.done){
-    state.totalPoints=Math.max(0,state.totalPoints-10);
-  }
-  state.tasks.splice(i,1);
-  saveState();renderTasks();renderHeader();
 }
 
 function deleteTask(i){
