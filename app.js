@@ -429,7 +429,7 @@ function renderStep(step) {
 
 function renderWelcomeStep() {
   return `
-    <div class="onboarding-step active" style="display:block !important; background: #ff0000;">
+    <div class="onboarding-step active">
       <div class="onboarding-icon">🏆</div>
       <h2>Daily Wins</h2>
       <p>Build lasting habits and track your daily wins. Let's set up your personalized experience.</p>
@@ -457,7 +457,7 @@ function renderTemplateStep() {
   `;
   
   return `
-    <div class="onboarding-step">
+    <div class="onboarding-step active">
       <div class="onboarding-progress">
         <div class="progress-dot active"></div>
         <div class="progress-dot active"></div>
@@ -478,7 +478,7 @@ function renderTemplateStep() {
 function renderCustomizeStep() {
   if (selectedTemplate === "custom") {
     return `
-      <div class="onboarding-step">
+      <div class="onboarding-step active">
         <div class="onboarding-progress">
           <div class="progress-dot active"></div>
           <div class="progress-dot active"></div>
@@ -513,7 +513,7 @@ function renderCustomizeStep() {
     `).join("");
   
   return `
-    <div class="onboarding-step">
+    <div class="onboarding-step active">
       <div class="onboarding-progress">
         <div class="progress-dot active"></div>
         <div class="progress-dot active"></div>
@@ -536,7 +536,7 @@ function renderCustomizeStep() {
 
 function renderGoalStep() {
   return `
-    <div class="onboarding-step">
+    <div class="onboarding-step active">
       <div class="onboarding-progress">
         <div class="progress-dot active"></div>
         <div class="progress-dot active"></div>
@@ -569,7 +569,7 @@ function renderLanguageStep() {
   `).join("");
   
   return `
-    <div class="onboarding-step">
+    <div class="onboarding-step active">
       <div class="onboarding-progress">
         <div class="progress-dot active"></div>
         <div class="progress-dot active"></div>
@@ -592,7 +592,7 @@ function renderLanguageStep() {
 
 function renderCompleteStep() {
   return `
-    <div class="onboarding-step">
+    <div class="onboarding-step active">
       <div class="onboarding-icon">🎉</div>
       <h2>You're All Set!</h2>
       <p>Your Daily Wins is ready. Start building your habits and tracking your progress!</p>
