@@ -11,6 +11,7 @@
 <link rel="icon" type="image/x-icon" href="favicon.ico"/>
 <link rel="icon" type="image/svg+xml" href="favicon.svg"/>
 <link rel="apple-touch-icon" href="favicon-192.png"/>
+<script src="https://unpkg.com/convex/browser@latest/dist/index.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
 <noscript><link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;700&display=swap" rel="stylesheet"></noscript>
@@ -357,9 +358,127 @@
   .all-done-sub{font-size:13px;color:var(--text-dim);margin-top:4px;}
   .nudge{background:var(--surface);border-left:3px solid var(--gold);border-radius:0 var(--radius-sm) var(--radius-sm) 0;padding:12px 14px;margin-bottom:20px;font-size:13px;color:var(--text-dim);line-height:1.5;}
   .nudge strong{color:var(--gold);display:block;font-size:14px;margin-bottom:3px;}
+
+  /* ── AUTH SCREEN ── */
+  #auth-screen{position:fixed;inset:0;background:var(--bg);z-index:2000;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 20px;}
+  .auth-logo{font-family:'Bebas Neue',sans-serif;font-size:48px;letter-spacing:3px;color:var(--gold);margin-bottom:8px;}
+  .auth-tagline{font-size:14px;color:var(--text-dim);margin-bottom:40px;text-align:center;}
+  .auth-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:24px;width:100%;max-width:360px;}
+  .auth-title{font-size:18px;font-weight:700;text-align:center;margin-bottom:20px;}
+  .auth-tabs{display:flex;gap:8px;margin-bottom:20px;}
+  .auth-tab{flex:1;padding:12px;background:transparent;border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text-dim);font-family:'DM Sans',sans-serif;font-size:14px;font-weight:600;cursor:pointer;transition:all 0.2s;}
+  .auth-tab.active{background:rgba(240,192,64,0.12);border-color:var(--gold);color:var(--gold);}
+  .auth-form{margin-top:0;}
+  .auth-btn{width:100%;padding:14px;border-radius:var(--radius-sm);font-family:'DM Sans',sans-serif;font-size:15px;font-weight:600;cursor:pointer;transition:all 0.2s;display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:12px;border:none;}
+  .auth-btn:active{transform:scale(0.98);}
+  .auth-btn-submit{background:var(--gold);color:#000;}
+  .auth-btn-submit:hover{background:var(--gold-dim);}
+  .auth-input{width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-family:'DM Sans',sans-serif;font-size:14px;padding:12px 14px;border-radius:var(--radius-sm);outline:none;margin-bottom:12px;transition:border-color 0.2s;}
+  .auth-input:focus{border-color:var(--gold);}
+  .auth-link{color:var(--gold);text-decoration:none;font-size:13px;}
+  .auth-link:hover{text-decoration:underline;}
+  .auth-error{color:var(--red);font-size:13px;text-align:center;margin-top:12px;padding:10px;background:rgba(255,85,96,0.1);border-radius:var(--radius-sm);}
+  .auth-error.show{display:block;}
+  .auth-success{color:var(--green);font-size:13px;text-align:center;margin-top:12px;padding:10px;background:rgba(61,220,132,0.1);border-radius:var(--radius-sm);}
+  .auth-success.show{display:block;}
+
+  /* ── ONBOARDING ── */
+  #onboarding-container{position:fixed;inset:0;background:var(--bg);z-index:1500;display:flex;flex-direction:column;padding:20px;overflow-y:auto;}
+  .onboarding{max-width:400px;margin:0 auto;width:100%;}
+  .onboarding-step{display:none;animation:fadeUp 0.3s ease;}
+  .onboarding-step.active{display:block;}
+  .onboarding-icon{font-size:64px;text-align:center;margin-bottom:20px;}
+  .onboarding-step h2{font-family:'Bebas Neue',sans-serif;font-size:32px;letter-spacing:1px;text-align:center;margin-bottom:12px;}
+  .onboarding-step p{color:var(--text-dim);text-align:center;font-size:14px;line-height:1.6;margin-bottom:24px;}
+  .onboarding-actions{display:flex;gap:12px;margin-top:24px;}
+  .onboarding-btn{flex:1;padding:14px;border-radius:var(--radius-sm);font-family:'DM Sans',sans-serif;font-size:14px;font-weight:600;cursor:pointer;transition:all 0.2s;border:none;}
+  .onboarding-btn.primary{background:var(--gold);color:#000;}
+  .onboarding-btn.secondary{background:var(--surface2);border:1px solid var(--border);color:var(--text);}
+  .onboarding-btn:active{transform:scale(0.98);}
+  .onboarding-btn:disabled{opacity:0.5;cursor:not-allowed;}
+  .onboarding-progress{display:flex;justify-content:center;gap:8px;margin-bottom:32px;}
+  .progress-dot{width:8px;height:8px;border-radius:50%;background:var(--surface2);border:1px solid var(--border);}
+  .progress-dot.active{background:var(--gold);border-color:var(--gold);}
+  .template-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px;}
+  .template-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px;text-align:center;cursor:pointer;transition:all 0.2s;}
+  .template-card:active{transform:scale(0.97);}
+  .template-card.selected{border-color:var(--gold);background:rgba(240,192,64,0.08);}
+  .template-emoji{font-size:32px;margin-bottom:8px;}
+  .template-name{font-size:13px;font-weight:600;}
+  .habits-list{display:flex;flex-direction:column;gap:10px;margin-bottom:20px;}
+  .habit-checkbox{display:flex;align-items:center;gap:12px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:14px;cursor:pointer;transition:all 0.2s;}
+  .habit-checkbox:has(input:checked){border-color:var(--gold);background:rgba(240,192,64,0.08);}
+  .habit-checkbox input{display:none;}
+  .habit-checkbox .habit-icon{font-size:24px;}
+  .habit-checkbox .habit-name{font-size:14px;font-weight:500;}
+  .goal-selector{display:flex;align-items:center;justify-content:center;gap:24px;margin:32px 0;}
+  .goal-btn{width:48px;height:48px;border-radius:50%;background:var(--surface);border:1px solid var(--border);color:var(--text);font-size:24px;cursor:pointer;transition:all 0.2s;}
+  .goal-btn:active{transform:scale(0.95);}
+  .goal-value{font-family:'Bebas Neue',sans-serif;font-size:48px;color:var(--gold);}
+  .goal-value span{font-family:'DM Sans',sans-serif;font-size:14px;color:var(--text-dim);}
+  .language-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+  .language-option{display:flex;align-items:center;gap:10px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:14px;cursor:pointer;transition:all 0.2s;}
+  .language-option.selected{border-color:var(--gold);background:rgba(240,192,64,0.08);}
+  .language-option input{display:none;}
+  .lang-flag{font-size:24px;}
+  .lang-name{font-size:13px;font-weight:500;}
+  .custom-habit-input{display:flex;gap:8px;margin-bottom:10px;}
+  .custom-habit-input input{flex:1;background:var(--surface);border:1px solid var(--border);color:var(--text);font-family:'DM Sans',sans-serif;font-size:14px;padding:10px 12px;border-radius:var(--radius-sm);outline:none;}
+  .custom-habit-input input:focus{border-color:var(--gold);}
+  .custom-habit-input .icon-input{flex:0 0 50px;text-align:center;}
+  .remove-habit{background:none;border:1px solid var(--border);color:var(--text-dim);width:36px;height:36px;border-radius:var(--radius-sm);cursor:pointer;font-size:14px;}
+  .remove-habit:hover{color:var(--red);border-color:var(--red);}
+
+  /* ── LOADING STATE ── */
+  .loading-overlay{position:fixed;inset:0;background:var(--bg);z-index:3000;display:flex;flex-direction:column;align-items:center;justify-content:center;}
+  .loading-spinner{width:48px;height:48px;border:3px solid var(--surface2);border-top-color:var(--gold);border-radius:50%;animation:spin 1s linear infinite;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+  .loading-text{color:var(--text-dim);margin-top:16px;font-size:14px;}
 </style>
 </head>
 <body>
+<!-- Loading overlay -->
+<div id="loading-overlay" class="loading-overlay">
+  <div class="loading-spinner"></div>
+  <div class="loading-text">Loading...</div>
+</div>
+
+<!-- Auth screen -->
+<div id="auth-screen" style="display:none">
+  <div class="auth-logo">Daily Wins 🏆</div>
+  <div class="auth-tagline">Build habits. Track wins. Become your best self.</div>
+  <div class="auth-card">
+    <div class="auth-tabs">
+      <button class="auth-tab active" id="tab-login">Sign In</button>
+      <button class="auth-tab" id="tab-signup">Sign Up</button>
+    </div>
+    
+    <!-- Login Form -->
+    <div id="login-form" class="auth-form">
+      <input type="email" class="auth-input" id="login-email" placeholder="Email address">
+      <input type="password" class="auth-input" id="login-password" placeholder="Password">
+      <button class="auth-btn auth-btn-submit" id="btn-login">Sign In</button>
+    </div>
+    
+    <!-- Signup Form -->
+    <div id="signup-form" class="auth-form" style="display:none">
+      <input type="text" class="auth-input" id="signup-name" placeholder="Your name (optional)">
+      <input type="email" class="auth-input" id="signup-email" placeholder="Email address">
+      <input type="password" class="auth-input" id="signup-password" placeholder="Password (min 6 characters)">
+      <button class="auth-btn auth-btn-submit" id="btn-signup">Create Account</button>
+    </div>
+    
+    <div class="auth-error" id="auth-error"></div>
+    <div class="auth-success" id="auth-success" style="display:none"></div>
+    <p style="text-align:center;margin-top:16px;font-size:12px;color:var(--text-dim)">
+      By continuing, you agree to our <a href="#" class="auth-link">Terms</a> and <a href="#" class="auth-link">Privacy Policy</a>
+    </p>
+  </div>
+</div>
+
+<!-- Onboarding container -->
+<div id="onboarding-container" style="display:none"></div>
+
 <div id="app">
   <div id="header">
     <div class="header-top">
@@ -665,8 +784,10 @@
 </div>
 <div id="toast"></div>
 
-<script>
-
+<script type="module">
+import { checkAuth, onAuthChange, AUTH_STATES, signInWithGoogle, signInWithApple } from './auth.js';
+import { initStore, getState } from './store.js';
+import { renderOnboarding } from './onboarding.js';
 
 // ════════════════════════════════════
 //  PHASE SWITCHER
@@ -1940,7 +2061,13 @@ if('speechSynthesis' in window){
   window.speechSynthesis.getVoices();
   window.speechSynthesis.onvoiceschanged = function(){};
 }
-try { renderAll(); } catch(e){ console.error('renderAll error:', e); }
+
+// ════════════════════════════════════
+//  LOAD BUNDLED APP
+// ════════════════════════════════════
+// The app.js contains all the auth, store, and onboarding logic
+
+// ════════════════════════════════════
 if('serviceWorker' in navigator){
   navigator.serviceWorker.register('sw.js').then(reg=>{
     // Try to register periodic background sync for alarm reliability
@@ -1957,6 +2084,7 @@ if('serviceWorker' in navigator){
     }
   }).catch(()=>{});
 }
-</script>
+ </script>
+<script src="app.js"></script>
 </body>
 </html>
