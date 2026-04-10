@@ -21,6 +21,26 @@ export const getHabits = query({
   },
 });
 
+export const getHabitLogs = query({
+  args: { token: v.string(), date: v.string() },
+  handler: async (ctx, args) => {
+    const credentials = await ctx.db.query("credentials").collect();
+    const credential = credentials.find(
+      (c: any) => c.sessionToken === args.token
+    );
+    
+    if (!credential) return [];
+    if (credential.sessionExpiry < Date.now()) return [];
+    
+    const logs = await ctx.db
+      .query("habitLogs")
+      .withIndex("by_user_date", (q) => q.eq("userId", credential.userId).eq("date", args.date))
+      .collect();
+
+    return logs.map(l => ({ habitId: l.habitId, completedAt: l.completedAt }));
+  },
+});
+
 export const listHabits = query({
   args: {},
   handler: async (ctx) => {

@@ -933,6 +933,20 @@ async function loadUserDataFromConvex() {
     window.WATER_GOAL = user.waterGoal || 8;
     console.log('WATER_GOAL set to:', window.WATER_GOAL);
     
+    // Load habit logs for today to restore completion state
+    const today = new Date().toISOString().slice(0, 10);
+    console.log('Fetching habit logs for today:', today);
+    const habitLogs = await runQuery("habits.getHabitLogs", { token, date: today });
+    console.log('Habit logs:', habitLogs);
+    
+    // Update todayData.done with completion status
+    if (typeof todayData !== 'undefined' && habitLogs) {
+      habitLogs.forEach(log => {
+        todayData.done[log.habitId] = true;
+      });
+      saveState();
+    }
+    
     console.log('loadUserDataFromConvex complete');
   } catch (error) {
     console.error('Failed to load user data:', error);
