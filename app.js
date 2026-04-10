@@ -392,9 +392,12 @@ let waterGoal = 8;
 let selectedLanguage = "spanish";
 
 function renderOnboarding(container) {
+  console.log('renderOnboarding called, currentStep:', currentStep);
+  const stepHtml = renderStep(currentStep);
+  console.log('Step HTML length:', stepHtml.length);
   container.innerHTML = `
     <div id="onboarding" class="onboarding">
-      ${renderStep(currentStep)}
+      ${stepHtml}
     </div>
   `;
   setupOnboardingHandlers(container);
@@ -611,6 +614,7 @@ function setupOnboardingHandlers(container) {
   
   if (btnNext) {
     btnNext.addEventListener("click", () => {
+      console.log('btnNext clicked, currentStep:', currentStep);
       if (currentStep === 1) {
         const selected = container.querySelector(".template-card.selected");
         if (!selected) {
@@ -648,7 +652,10 @@ function setupOnboardingHandlers(container) {
       }
       
       currentStep++;
-      container.querySelector("#onboarding").innerHTML = renderStep(currentStep);
+      console.log('After increment, currentStep:', currentStep);
+      const nextHtml = renderStep(currentStep);
+      console.log('Next HTML length:', nextHtml.length);
+      container.querySelector("#onboarding").innerHTML = nextHtml;
       setupOnboardingHandlers(container);
     });
   }
@@ -942,4 +949,5 @@ function renderAll() {
 // Start app initialization
 document.getElementById('loading-overlay').style.display = 'none';
 document.getElementById('auth-screen').style.display = 'flex';
-initApp();
+window.addEventListener('error', (e) => console.error('Global error:', e.error));
+initApp().catch(e => console.error('Init error:', e));
