@@ -2,6 +2,8 @@
 //  CONVEX CLIENT (CDN-based)
 // ════════════════════════════════════
 
+console.log('app.js is loading...');
+
 const CONVEX_URL = "https://knowing-pig-683.eu-west-1.convex.cloud";
 
 let convexClient = null;
@@ -778,11 +780,14 @@ function showAuth() {
 }
 
 async function initApp() {
+  console.log('initApp starting...');
   // First, initialize Convex connection
   await initAuth();
+  console.log('Auth initialized');
   
   try {
     const { state, user } = await checkAuth();
+    console.log('Auth checked, state:', state, 'user:', user);
     
     hideLoading();
     
@@ -959,7 +964,17 @@ function renderAll() {
 }
 
 // Start app initialization
-document.getElementById('loading-overlay').style.display = 'none';
-document.getElementById('auth-screen').style.display = 'flex';
+console.log('Script starting...');
+const loadingOverlay = document.getElementById('loading-overlay');
+const authScreen = document.getElementById('auth-screen');
+const onboardingContainer = document.getElementById('onboarding-container');
+console.log('Elements found:', {
+  loadingOverlay: !!loadingOverlay,
+  authScreen: !!authScreen,
+  onboardingContainer: !!onboardingContainer
+});
+
+loadingOverlay.style.display = 'none';
+authScreen.style.display = 'flex';
 window.addEventListener('error', (e) => console.error('Global error:', e.error));
 initApp().catch(e => console.error('Init error:', e));
