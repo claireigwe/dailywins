@@ -471,6 +471,9 @@ function renderTemplateStep() {
         ${templateCards}
         ${customCard}
       </div>
+      <div class="onboarding-actions">
+        <button class="onboarding-btn primary" id="btn-next">Continue</button>
+      </div>
     </div>
   `;
 }
