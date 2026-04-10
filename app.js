@@ -238,8 +238,13 @@ function logoutUser() {
 function toggleTheme() {
   const html = document.documentElement;
   const currentTheme = html.getAttribute('data-theme');
-  const newTheme = currentTheme === 'light' ? 'dark' : 'light';
-  html.setAttribute('data-theme', newTheme);
+  const newTheme = currentTheme === 'dark' ? '' : 'dark';
+  
+  if (newTheme) {
+    html.setAttribute('data-theme', newTheme);
+  } else {
+    html.removeAttribute('data-theme');
+  }
   
   if (typeof state !== 'undefined') {
     state.settings = state.settings || {};
@@ -249,19 +254,24 @@ function toggleTheme() {
   
   const toggleEl = document.getElementById('themeToggle');
   if (toggleEl) {
-    toggleEl.className = 'toggle' + (newTheme === 'light' ? ' on' : '');
+    toggleEl.className = 'toggle' + (newTheme === 'dark' ? ' on' : '');
   }
 }
 
 function initTheme() {
+  const html = document.documentElement;
   const savedTheme = localStorage.getItem('theme');
-  if (savedTheme) {
-    document.documentElement.setAttribute('data-theme', savedTheme);
+  
+  if (savedTheme === 'dark') {
+    html.setAttribute('data-theme', 'dark');
+  } else {
+    html.removeAttribute('data-theme');
   }
+  
   const toggleEl = document.getElementById('themeToggle');
   if (toggleEl) {
-    const currentTheme = document.documentElement.getAttribute('data-theme');
-    toggleEl.className = 'toggle' + (currentTheme === 'light' ? ' on' : '');
+    const currentTheme = html.getAttribute('data-theme');
+    toggleEl.className = 'toggle' + (currentTheme === 'dark' ? ' on' : '');
   }
 }
 
