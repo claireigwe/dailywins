@@ -1037,10 +1037,7 @@ document.querySelectorAll('.auth-input').forEach(input => {
 // ════════════════════════════════════
 
 // This will be replaced by the actual renderAll from the original app
-// For now, we show the auth screen
-function renderAll() {
-  console.log('App initialized with Convex');
-}
+// Note: renderAll is defined in index.html and should not be overridden
 
 // Start app initialization
 console.log('Script starting...');
