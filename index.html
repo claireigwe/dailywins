@@ -36,11 +36,11 @@
   *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
   html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Instrument Sans',sans-serif;overscroll-behavior:none;}
   body::before{display:none;}
-  #app{display:flex;flex-direction:column;min-height:100dvh;max-width:480px;margin:0 auto;box-sizing:border-box;}
+  #app{display:flex;flex-direction:column;max-width:480px;margin:0 auto;box-sizing:border-box;}
   @media (min-width: 520px) {
-    body{background:var(--surface);display:block;}
-    #app{width:480px;max-width:480px;border-radius:24px;box-shadow:0 0 60px rgba(0,0,0,0.15);min-height:calc(100dvh - 40px);}
-    #nav{position:relative;border-radius:0 0 24px 24px;}
+    body{background:var(--surface);}
+    #app{width:480px;max-width:480px;border-radius:24px;box-shadow:0 0 60px rgba(0,0,0,0.15);}
+    #nav{position:relative;border-radius:0 0 24px 24px;left:auto;transform:none;width:100%;max-width:480px;margin:0 auto;}
   }
   button:focus:not(:focus-visible),
   input:focus:not(:focus-visible),
