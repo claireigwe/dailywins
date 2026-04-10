@@ -896,23 +896,37 @@ async function loadUserDataFromConvex() {
     
     const habits = await runQuery("habits.getHabits", { token });
     console.log('Habits from Convex:', habits);
-    console.log('HABITS defined:', typeof HABITS !== 'undefined', 'length:', typeof HABITS !== 'undefined' ? HABITS.length : 'N/A');
     
-    if (habits && typeof HABITS !== 'undefined') {
-      HABITS.length = 0;
-      habits.forEach(h => HABITS.push({ id: h._id, name: h.name, icon: h.icon, pts: h.points, desc: h.description }));
-      console.log('HABITS after update:', HABITS);
-    }
+    // Update HABITS in the main page scope
+    window.userHabits = habits || [];
+    window.WATER_GOAL = user.waterGoal || 8;
+    console.log('WATER_GOAL set to:', window.WATER_GOAL);
     
-    if (typeof WATER_GOAL !== 'undefined') {
-      window.WATER_GOAL = user.waterGoal || 8;
-      console.log('WATER_GOAL set to:', window.WATER_GOAL);
-    }
+    // Trigger a custom event to tell the page to update
+    window.dispatchEvent(new CustomEvent('convexDataLoaded'));
     
     console.log('User data loaded from Convex');
   } catch (error) {
     console.error('Failed to load user data:', error);
   }
+}
+
+// Listen for Convex data loaded event
+if (typeof window !== 'undefined') {
+  window.addEventListener('convexDataLoaded', () => {
+    console.log('convexDataLoaded event received, userHabits:', window.userHabits);
+    // Update HABITS array if it exists
+    if (typeof HABITS !== 'undefined' && window.userHabits) {
+      HABITS.length = 0;
+      window.userHabits.forEach(h => {
+        HABITS.push({ id: h._id, name: h.name, icon: h.icon, pts: h.points, desc: h.description });
+      });
+      console.log('HABITS updated:', HABITS);
+      if (typeof renderHabits === 'function') renderHabits();
+      if (typeof renderWater === 'function') renderWater();
+      if (typeof renderHeader === 'function') renderHeader();
+    }
+  });
 }
 
 // Auth button handlers

@@ -1463,22 +1463,34 @@ function renderHeader(){
 }
 
 function renderHabits(){
+  // Use habits from Convex if available, otherwise use local HABITS
+  const habits = (typeof window !== 'undefined' && window.userHabits) 
+    ? window.userHabits.map(h => ({ id: h._id, name: h.name, icon: h.icon, pts: h.points, desc: h.description }))
+    : HABITS;
+  console.log('renderHabits called, habits:', habits);
   const list=document.getElementById('habitList');list.innerHTML='';
-  HABITS.forEach(h=>{
+  if (habits.length === 0) {
+    list.innerHTML = '<div style="color:var(--text-dim);text-align:center;padding:20px;">No habits yet. Add some in settings!</div>';
+    return;
+  }
+  habits.forEach(h=>{
     const done=!!todayData.done[h.id];
     const el=document.createElement('div');el.className='habit-item'+(done?' done':'');
-    el.innerHTML=`<div class="habit-icon">${h.icon}</div><div class="habit-info"><div class="habit-name">${h.name}</div><div class="habit-sub">${h.sub}</div><div class="habit-pts">+${h.pts} pts</div></div><div class="habit-check">${done?'✓':''}</div>`;
+    el.innerHTML=`<div class="habit-icon">${h.icon}</div><div class="habit-info"><div class="habit-name">${h.name}</div><div class="habit-sub">${h.desc || ''}</div><div class="habit-pts">+${h.pts} pts</div></div><div class="habit-check">${done?'✓':''}</div>`;
     el.addEventListener('click',(e)=>toggleHabitAnimated(h.id,h.pts,e.currentTarget));
     list.appendChild(el);
   });
-  document.getElementById('allDoneBanner').classList.toggle('show',HABITS.every(h=>todayData.done[h.id]));
+  document.getElementById('allDoneBanner').classList.toggle('show',habits.every(h=>todayData.done[h.id]));
 }
 
 function toggleHabit(id,pts){
   if(todayData.done[id]){todayData.done[id]=false;state.totalPoints=Math.max(0,state.totalPoints-pts);toast('Habit unchecked');saveState();renderHabits();renderHeader();return;}
   todayData.done[id]=true;state.totalPoints+=pts;beep('ok');
-  toast(`+${pts} pts — ${id==='wake'?'Early bird!':id==='workout'?'Gains made!':id==='eat'?'Eating clean!':'Habit logged!'} 🎉`,'gold');
-  if(HABITS.every(h=>todayData.done[h.id])){
+  toast(`+${pts} pts — Habit logged! 🎉`,'gold');
+  const currentHabits = (typeof window !== 'undefined' && window.userHabits) 
+    ? window.userHabits.map(h => ({ id: h._id }))
+    : HABITS;
+  if(currentHabits.every(h=>todayData.done[h.id])){
     state.streak++;if(state.streak>state.bestStreak)state.bestStreak=state.streak;
     state.perfectDays++;setTimeout(confetti,200);
     toast('🔥 PERFECT DAY! Streak: '+state.streak,'green',4000);
@@ -1488,8 +1500,11 @@ function toggleHabit(id,pts){
 
 function renderNudge(){
   const done=Object.values(todayData.done).filter(Boolean).length;
+  const currentHabits = (typeof window !== 'undefined' && window.userHabits) 
+    ? window.userHabits
+    : HABITS;
   const box=document.getElementById('nudgeBox');
-  if(done>0&&done<HABITS.length){
+  if(done>0&&done<currentHabits.length){
     const n=NUDGES[Math.floor(Date.now()/86400000)%NUDGES.length];
     document.getElementById('nudgeTitle').textContent=n.title;
     document.getElementById('nudgeText').textContent=n.text;
@@ -1685,6 +1700,9 @@ function renderStats(){
 function renderWeek(){
   const dn=['SUN','MON','TUE','WED','THU','FRI','SAT'];
   const le=document.getElementById('weekLabels'),ce=document.getElementById('weekCells');
+  const currentHabits = (typeof window !== 'undefined' && window.userHabits) 
+    ? window.userHabits
+    : HABITS;
   le.innerHTML='';ce.innerHTML='';
   for(let i=6;i>=0;i--){
     const d=new Date();d.setDate(d.getDate()-i);
@@ -1693,7 +1711,7 @@ function renderWeek(){
     const done=dd?Object.values(dd.done).filter(Boolean).length:0;
     const lb=document.createElement('div');lb.className='week-day-label';lb.textContent=dn[d.getDay()];le.appendChild(lb);
     const cl=document.createElement('div');
-    cl.className='week-cell'+(done===HABITS.length&&done>0?' full':done>0?' partial':'')+(i===0?' today-cell':'');
+    cl.className='week-cell'+(done===currentHabits.length&&done>0?' full':done>0?' partial':'')+(i===0?' today-cell':'');
     cl.textContent=done>0?done:'';ce.appendChild(cl);
   }
 }
@@ -1878,7 +1896,10 @@ function renderCalendar(){
     else if(!dayData)cls+=' no-data';
     else{
       const done=Object.values(dayData.done||{}).filter(Boolean).length;
-      if(done===HABITS.length)cls+=' full';
+      const currentHabits = (typeof window !== 'undefined' && window.userHabits) 
+        ? window.userHabits
+        : HABITS;
+      if(done===currentHabits.length)cls+=' full';
       else if(done>0)cls+=' partial';
       else cls+=' no-data';
     }
@@ -2123,7 +2144,10 @@ function toggleHabitAnimated(id, pts, el){
   if(item){item.classList.add('just-done');setTimeout(()=>item.classList.remove('just-done'),400);}
   const msgs={wake:'Early bird! 🌅',workout:'Gains made! 💪',eat:'Eating clean! 🥗',lang:'Language XP! 🌍'};
   toast('+'+(pts)+' pts — '+(msgs[id]||'Done!'),'gold');
-  const allDone=HABITS.every(h=>todayData.done[h.id]);
+  const currentHabits = (typeof window !== 'undefined' && window.userHabits) 
+    ? window.userHabits
+    : HABITS;
+  const allDone=currentHabits.every(h=>todayData.done[h.id]);
   if(allDone){
     state.streak++;if(state.streak>state.bestStreak)state.bestStreak=state.streak;
     state.perfectDays++;setTimeout(confetti,200);
