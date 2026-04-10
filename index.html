@@ -624,7 +624,7 @@
         <div class="water-cups" id="waterCups"></div>
         <div class="water-bar-wrap"><div class="water-bar-fill" id="waterBar" style="width:0%"></div></div>
         <div class="water-actions">
-          <button class="water-btn add" onclick="alert('Button clicked!'); addWater(); return false;">＋ Add glass</button>
+          <button class="water-btn add" onclick="addWater(); return false;">＋ Add glass</button>
           <button class="water-btn remove" onclick="removeWater()">− Remove</button>
         </div>
       </div>
@@ -1840,8 +1840,8 @@ function saveIntention(){
 // ════════════════════════════════════
 const WATER_GOAL = 8;
 function renderWater(){
-  console.log('renderWater called, WATER_GOAL:', window.WATER_GOAL);
   const waterGoal = window.WATER_GOAL || 8;
+  console.log('renderWater called, waterGoal:', waterGoal);
   const glasses=todayData.water||0;
   document.getElementById('waterCount').textContent=glasses;
   document.getElementById('waterGoal').textContent='Goal: '+waterGoal+' glasses';
@@ -1860,15 +1860,17 @@ function renderWater(){
   }
 }
 function addWater(){
-  alert('addWater function called!');
-  console.log('addWater function called');
   const waterGoal = window.WATER_GOAL || 8;
+  console.log('addWater called, waterGoal:', waterGoal, 'current water:', todayData.water);
   if(!todayData.water) todayData.water = 0;
   if(todayData.water>=waterGoal){toast('You hit your water goal! 💧','blue');return;}
   todayData.water++;
+  console.log('after increment:', todayData.water);
   if(todayData.water===waterGoal){toast('💧 Water goal reached! Great job!','blue');beep('ok');}
   saveState();
+  console.log('calling renderWater');
   renderWater();
+  console.log('water count element:', document.getElementById('waterCount').textContent);
 }
 function removeWater(){
   if(!todayData.water||todayData.water<=0)return;
