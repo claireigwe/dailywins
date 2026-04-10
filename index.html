@@ -2183,7 +2183,8 @@ function toggleHabitAnimated(id, pts, el){
         token, 
         habitId: id, 
         date: today, 
-        completed: false 
+        completed: false,
+        points: pts
       }).catch(e => console.error('Failed to sync habit uncheck:', e));
     }
     return;
@@ -2217,7 +2218,8 @@ function toggleHabitAnimated(id, pts, el){
       token, 
       habitId: id, 
       date: today, 
-      completed: true 
+      completed: true,
+      points: pts
     }).catch(e => console.error('Failed to sync habit:', e));
   }
 }

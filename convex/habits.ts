@@ -42,7 +42,7 @@ export const getHabitLogs = query({
 });
 
 export const logHabitCompletion = mutation({
-  args: { token: v.string(), habitId: v.id("habits"), date: v.string(), completed: v.boolean() },
+  args: { token: v.string(), habitId: v.id("habits"), date: v.string(), completed: v.boolean(), points: v.optional(v.number()) },
   handler: async (ctx, args) => {
     const credentials = await ctx.db.query("credentials").collect();
     const credential = credentials.find(
@@ -51,6 +51,9 @@ export const logHabitCompletion = mutation({
     
     if (!credential) throw new Error("Invalid session");
     if (credential.sessionExpiry < Date.now()) throw new Error("Session expired");
+    
+    const user = await ctx.db.get(credential.userId);
+    if (!user) throw new Error("User not found");
     
     // Find existing log for this habit on this date
     const existing = await ctx.db
@@ -70,10 +73,20 @@ export const logHabitCompletion = mutation({
           date: args.date,
           completedAt: Date.now(),
         });
+        // Add points to user's total
+        const points = args.points || 20;
+        await ctx.db.patch(user._id, {
+          totalPoints: user.totalPoints + points,
+        });
       }
     } else {
       if (existingLog) {
         await ctx.db.delete(existingLog._id);
+        // Remove points from user's total
+        const points = args.points || 20;
+        await ctx.db.patch(user._id, {
+          totalPoints: Math.max(0, user.totalPoints - points),
+        });
       }
     }
     

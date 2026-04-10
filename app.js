@@ -915,13 +915,16 @@ async function loadUserDataFromConvex() {
     if (!user) return;
     
     if (typeof state !== 'undefined') {
+      // Only use Convex values if localStorage is empty/default
+      if (!state.totalPoints || state.totalPoints === 0) {
+        state.totalPoints = user.totalPoints || 0;
+      }
       state.streak = user.currentStreak || 0;
       state.bestStreak = user.bestStreak || 0;
-      state.totalPoints = user.totalPoints || 0;
       state.totalDays = user.totalDays || 0;
       state.settings = state.settings || {};
       state.settings.lang = user.language || 'spanish';
-      console.log('State updated');
+      console.log('State updated, totalPoints preserved from localStorage:', state.totalPoints);
     }
     
     console.log('Fetching habits...');
