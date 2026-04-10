@@ -331,9 +331,17 @@ async function toggleTask(taskId) {
   await initStore();
 }
 
-async function addWater() {
+// These functions are deprecated - using local-only water tracking
+async function addWaterDeprecated() {
   const today = new Date().toISOString().slice(0, 10);
   const result = await runMutation("water.addWater", { date: today });
+  updateState("water", { glasses: result.glasses, goal: result.goal });
+  return result;
+}
+
+async function removeWaterDeprecated() {
+  const today = new Date().toISOString().slice(0, 10);
+  const result = await runMutation("water.removeWater", { date: today });
   updateState("water", { glasses: result.glasses, goal: result.goal });
   return result;
 }
