@@ -873,10 +873,15 @@ onAuthChange((state, user) => {
 
 async function loadUserDataFromConvex() {
   try {
+    console.log('Loading user data from Convex...');
     const token = getStoredToken();
-    if (!token) return;
+    if (!token) {
+      console.log('No token found');
+      return;
+    }
     
     const user = await runQuery("users.getUserData", { token });
+    console.log('User data:', user);
     if (!user) return;
     
     if (typeof state !== 'undefined') {
@@ -886,12 +891,22 @@ async function loadUserDataFromConvex() {
       state.totalDays = user.totalDays || 0;
       state.settings = state.settings || {};
       state.settings.lang = user.language || 'spanish';
+      console.log('State updated');
     }
     
     const habits = await runQuery("habits.getHabits", { token });
+    console.log('Habits from Convex:', habits);
+    console.log('HABITS defined:', typeof HABITS !== 'undefined', 'length:', typeof HABITS !== 'undefined' ? HABITS.length : 'N/A');
+    
     if (habits && typeof HABITS !== 'undefined') {
       HABITS.length = 0;
       habits.forEach(h => HABITS.push({ id: h._id, name: h.name, icon: h.icon, pts: h.points, desc: h.description }));
+      console.log('HABITS after update:', HABITS);
+    }
+    
+    if (typeof WATER_GOAL !== 'undefined') {
+      window.WATER_GOAL = user.waterGoal || 8;
+      console.log('WATER_GOAL set to:', window.WATER_GOAL);
     }
     
     console.log('User data loaded from Convex');

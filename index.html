@@ -1816,15 +1816,16 @@ function saveIntention(){
 // ════════════════════════════════════
 //  WATER TRACKER
 // ════════════════════════════════════
-const WATER_GOAL=8;
+const WATER_GOAL = 8;
 function renderWater(){
+  const waterGoal = window.WATER_GOAL || 8;
   const glasses=todayData.water||0;
   document.getElementById('waterCount').textContent=glasses;
-  document.getElementById('waterGoal').textContent='Goal: '+WATER_GOAL+' glasses';
-  document.getElementById('waterBar').style.width=Math.min(100,Math.round((glasses/WATER_GOAL)*100))+'%';
+  document.getElementById('waterGoal').textContent='Goal: '+waterGoal+' glasses';
+  document.getElementById('waterBar').style.width=Math.min(100,Math.round((glasses/waterGoal)*100))+'%';
   const cups=document.getElementById('waterCups');
   cups.innerHTML='';
-  for(let i=0;i<WATER_GOAL;i++){
+  for(let i=0;i<waterGoal;i++){
     const el=document.createElement('span');
     el.className='water-cup'+(i>=glasses?' empty':'');
     el.textContent='🥛';
@@ -1836,10 +1837,11 @@ function renderWater(){
   }
 }
 function addWater(){
+  const waterGoal = window.WATER_GOAL || 8;
   if(!todayData.water)todayData.water=0;
-  if(todayData.water>=WATER_GOAL){toast('You hit your water goal! 💧','blue');return;}
+  if(todayData.water>=waterGoal){toast('You hit your water goal! 💧','blue');return;}
   todayData.water++;
-  if(todayData.water===WATER_GOAL){toast('💧 Water goal reached! Great job!','blue');beep('ok');}
+  if(todayData.water===waterGoal){toast('💧 Water goal reached! Great job!','blue');beep('ok');}
   saveState();renderWater();
 }
 function removeWater(){
