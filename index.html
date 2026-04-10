@@ -36,6 +36,14 @@
   *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
   html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Instrument Sans',sans-serif;overscroll-behavior:none;}
   body::before{display:none;}
+  @media (min-width: 520px) {
+    html, body {
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      padding-top: 20px;
+    }
+  }
   
   :focus-visible {
     outline: 3px solid var(--purple);
