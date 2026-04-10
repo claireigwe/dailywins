@@ -105,6 +105,9 @@ async function runMutation(mutationPath, args) {
   return convexClient.mutation(mutation, args || {});
 }
 
+// Expose to window for use in index.html
+window.runMutation = runMutation;
+
 async function runQuery(queryPath, args) {
   if (!convexClient || !api) throw new Error('Convex not connected');
   const [module, func] = queryPath.split(".");

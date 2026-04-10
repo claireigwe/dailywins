@@ -1860,13 +1860,19 @@ function renderWater(){
   }
 }
 function addWater(){
-  console.log('addWater called, WATER_GOAL:', window.WATER_GOAL);
+  console.log('addWater called');
   const waterGoal = window.WATER_GOAL || 8;
   if(!todayData.water)todayData.water=0;
   if(todayData.water>=waterGoal){toast('You hit your water goal! 💧','blue');return;}
   todayData.water++;
   if(todayData.water===waterGoal){toast('💧 Water goal reached! Great job!','blue');beep('ok');}
   saveState();renderWater();
+  // Also sync to Convex if logged in
+  const token = localStorage.getItem('dw_token');
+  if (token && window.runMutation) {
+    const today = new Date().toISOString().slice(0,10);
+    window.runMutation("water.addWater", { token, date: today }).catch(e => console.error('Water sync error:', e));
+  }
 }
 function removeWater(){
   if(!todayData.water||todayData.water<=0)return;

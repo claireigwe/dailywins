@@ -1,18 +1,19 @@
 import { query, mutation } from "./_generated/server";
 import { v } from "convex/values";
 
+async function getUserFromToken(ctx: any, token: string) {
+  const credentials = await ctx.db.query("credentials").collect();
+  const credential = credentials.find((c: any) => c.sessionToken === token);
+  if (!credential) return null;
+  if (credential.sessionExpiry < Date.now()) return null;
+  return await ctx.db.get(credential.userId);
+}
+
 export const getWaterLog = query({
-  args: { date: v.string() },
+  args: { token: v.string(), date: v.string() },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) return null;
-
-    const user = await ctx.db
-      .query("users")
-      .withIndex("by_email", (q) => q.eq("email", identity.email!))
-      .unique();
-
-    if (!user) return null;
+    const user = await getUserFromToken(ctx, args.token);
+    if (!user) return { glasses: 0, goal: 8 };
 
     const log = await ctx.db
       .query("waterLogs")
@@ -29,17 +30,10 @@ export const getWaterLog = query({
 });
 
 export const addWater = mutation({
-  args: { date: v.string() },
+  args: { token: v.string(), date: v.string() },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Unauthenticated");
-
-    const user = await ctx.db
-      .query("users")
-      .withIndex("by_email", (q) => q.eq("email", identity.email!))
-      .unique();
-
-    if (!user) throw new Error("User not found");
+    const user = await getUserFromToken(ctx, args.token);
+    if (!user) throw new Error("Invalid session");
 
     const existing = await ctx.db
       .query("waterLogs")
@@ -76,17 +70,10 @@ export const addWater = mutation({
 });
 
 export const removeWater = mutation({
-  args: { date: v.string() },
+  args: { token: v.string(), date: v.string() },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Unauthenticated");
-
-    const user = await ctx.db
-      .query("users")
-      .withIndex("by_email", (q) => q.eq("email", identity.email!))
-      .unique();
-
-    if (!user) throw new Error("User not found");
+    const user = await getUserFromToken(ctx, args.token);
+    if (!user) throw new Error("Invalid session");
 
     const existing = await ctx.db
       .query("waterLogs")
@@ -112,17 +99,10 @@ export const removeWater = mutation({
 });
 
 export const setWaterGlasses = mutation({
-  args: { date: v.string(), glasses: v.number() },
+  args: { token: v.string(), date: v.string(), glasses: v.number() },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Unauthenticated");
-
-    const user = await ctx.db
-      .query("users")
-      .withIndex("by_email", (q) => q.eq("email", identity.email!))
-      .unique();
-
-    if (!user) throw new Error("User not found");
+    const user = await getUserFromToken(ctx, args.token);
+    if (!user) throw new Error("Invalid session");
 
     const existing = await ctx.db
       .query("waterLogs")
