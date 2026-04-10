@@ -924,11 +924,7 @@ async function loadUserDataFromConvex() {
   }
 }
 
-// Note: render functions are now called directly after loadUserDataFromConvex()
-  });
-}
-
-// Auth button handlers
+// Auth button handlers - fixed
 document.getElementById('tab-login').addEventListener('click', () => {
   document.getElementById('tab-login').classList.add('active');
   document.getElementById('tab-signup').classList.remove('active');
