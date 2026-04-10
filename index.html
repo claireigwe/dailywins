@@ -605,7 +605,10 @@
         <div class="streak-card fire"><div class="streak-emoji">🔥</div><div class="streak-num" id="streakNum">0</div><div class="streak-label">Day Streak</div></div>
         <div class="streak-card"><div class="streak-emoji">⭐</div><div class="streak-num" id="pointsNum">0</div><div class="streak-label">Total Points</div></div>
       </div>
-      <div class="section-title">TODAY'S <span>HABITS</span></div>
+      <div class="section-title" style="display:flex;justify-content:space-between;align-items:center;">
+        TODAY'S <span>HABITS</span>
+        <button class="add-task-btn" onclick="toggleTaskInput()">＋ Add Daily Task</button>
+      </div>
       <div class="habit-list" id="habitList"></div>
       <div class="water-card">
         <div class="water-header">
@@ -627,7 +630,6 @@
       </div>
       <div class="tasks-header">
         <div class="tasks-title">MY <span>TASKS</span></div>
-        <button class="add-task-btn" onclick="toggleTaskInput()">＋ Add Task</button>
       </div>
       <div id="taskInputRow" class="task-input-row" style="display:none">
         <input class="task-input" id="taskInput" type="text" placeholder="What do you need to do?" maxlength="80" onkeydown="if(event.key==='Enter')submitTask()"/>
@@ -1513,10 +1515,12 @@ function renderNudge(){
 }
 
 function renderLang(){
+  console.log('renderLang called, settings.lang:', state.settings.lang);
   const w=curWord();
+  console.log('curWord:', w);
   const names={spanish:'🇪🇸 Spanish',french:'🇫🇷 French',german:'🇩🇪 German',japanese:'🇯🇵 Japanese',yoruba:'🇳🇬 Yoruba'};
-  document.getElementById('langBadge').textContent=names[state.settings.lang];
-  document.getElementById('langQ').textContent=w.q;
+  document.getElementById('langBadge').textContent=names[state.settings.lang] || 'Spanish';
+  document.getElementById('langQ').textContent=w ? w.q : 'Loading...';
   document.getElementById('langPhonetic').textContent=w.ph;
   document.getElementById('langResult').textContent='';
   document.getElementById('langResult').className='lang-result';
@@ -1836,6 +1840,7 @@ function saveIntention(){
 // ════════════════════════════════════
 const WATER_GOAL = 8;
 function renderWater(){
+  console.log('renderWater called, WATER_GOAL:', window.WATER_GOAL);
   const waterGoal = window.WATER_GOAL || 8;
   const glasses=todayData.water||0;
   document.getElementById('waterCount').textContent=glasses;

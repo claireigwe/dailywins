@@ -915,17 +915,24 @@ async function loadUserDataFromConvex() {
 if (typeof window !== 'undefined') {
   window.addEventListener('convexDataLoaded', () => {
     console.log('convexDataLoaded event received, userHabits:', window.userHabits);
-    // Update HABITS array if it exists
+    // Update HABITS in the main page scope
     if (typeof HABITS !== 'undefined' && window.userHabits) {
       HABITS.length = 0;
       window.userHabits.forEach(h => {
         HABITS.push({ id: h._id, name: h.name, icon: h.icon, pts: h.points, desc: h.description });
       });
       console.log('HABITS updated:', HABITS);
+    }
+    // Re-render all sections
+    setTimeout(() => {
       if (typeof renderHabits === 'function') renderHabits();
       if (typeof renderWater === 'function') renderWater();
       if (typeof renderHeader === 'function') renderHeader();
-    }
+      if (typeof renderLang === 'function') renderLang();
+      if (typeof renderAll === 'function') renderAll();
+    }, 100);
+  });
+}
   });
 }
 
