@@ -395,11 +395,18 @@ function renderOnboarding(container) {
   console.log('renderOnboarding called, currentStep:', currentStep);
   const stepHtml = renderStep(currentStep);
   console.log('Step HTML length:', stepHtml.length);
-  container.innerHTML = `
-    <div id="onboarding" class="onboarding">
-      ${stepHtml}
-    </div>
-  `;
+  console.log('Step HTML preview:', stepHtml.substring(0, 200));
+  
+  const onboardingDiv = document.createElement('div');
+  onboardingDiv.id = 'onboarding';
+  onboardingDiv.className = 'onboarding';
+  onboardingDiv.innerHTML = stepHtml;
+  
+  container.innerHTML = '';
+  container.appendChild(onboardingDiv);
+  
+  console.log('Container children after render:', container.children.length);
+  console.log('Onboarding div children:', document.getElementById('onboarding')?.children.length);
   setupOnboardingHandlers(container);
 }
 
@@ -810,24 +817,29 @@ async function initApp() {
 
 // Listen for auth changes
 onAuthChange((state, user) => {
+  console.log('Auth state changed:', state, 'user:', user);
   const authScreen = document.getElementById('auth-screen');
   const onboardingContainer = document.getElementById('onboarding-container');
   
   if (state === AUTH_STATES.LOGGED_OUT || state === AUTH_STATES.OFFLINE) {
+    console.log('Showing auth screen');
     authScreen.style.display = 'flex';
     if (onboardingContainer) onboardingContainer.style.display = 'none';
     appInitialized = false;
   }
   
   if (state === AUTH_STATES.ONBOARDING) {
+    console.log('Showing onboarding');
     authScreen.style.display = 'none';
     if (onboardingContainer) {
       onboardingContainer.style.display = 'block';
+      console.log('Onboarding container display set to block');
       renderOnboarding(onboardingContainer);
     }
   }
   
   if (state === AUTH_STATES.LOGGED_IN) {
+    console.log('User logged in, initializing app');
     authScreen.style.display = 'none';
     if (onboardingContainer) onboardingContainer.style.display = 'none';
     if (!appInitialized) {
