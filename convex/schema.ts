@@ -7,10 +7,9 @@ export default defineSchema({
     userId: v.id("users"),
     email: v.string(),
     passwordHash: v.string(),
-    token: v.optional(v.string()),
-    tokenExpiry: v.optional(v.number()),
-  }).index("by_email", ["email"])
-    .index("by_token", ["token"]),
+    sessionToken: v.string(),
+    sessionExpiry: v.number(),
+  }).index("by_email", ["email"]),
 
   // Users table - extended from Convex Auth
   users: defineTable({

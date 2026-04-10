@@ -2,7 +2,7 @@
 //  CONVEX CLIENT (CDN-based)
 // ════════════════════════════════════
 
-const CONVEX_URL = "https://perfect-chicken-357.eu-west-1.convex.cloud";
+const CONVEX_URL = "https://knowing-pig-683.eu-west-1.convex.cloud";
 
 let convexClient = null;
 let api = null;

@@ -42,6 +42,8 @@ export const signUp = mutation({
     }
     
     const passwordHash = await hashPassword(args.password);
+    const token = generateToken();
+    const expiry = Date.now() + 30 * 24 * 60 * 60 * 1000;
     
     const userId = await ctx.db.insert("users", {
       email,
@@ -60,8 +62,8 @@ export const signUp = mutation({
       userId,
       email,
       passwordHash,
-      token: null,
-      tokenExpiry: null,
+      sessionToken: token,
+      sessionExpiry: expiry,
     });
     
     await ctx.db.insert("userSettings", {
@@ -79,21 +81,6 @@ export const signUp = mutation({
       notificationEnabled: false,
       soundEnabled: true,
     });
-    
-    const token = generateToken();
-    await ctx.db.patch(userId, {});
-    
-    const credentialDoc = await ctx.db
-      .query("credentials")
-      .withIndex("by_email", (q) => q.eq("email", email))
-      .unique();
-    
-    if (credentialDoc) {
-      await ctx.db.patch(credentialDoc._id, {
-        token,
-        tokenExpiry: Date.now() + 30 * 24 * 60 * 60 * 1000,
-      });
-    }
     
     return {
       success: true,
@@ -127,9 +114,11 @@ export const logIn = mutation({
     }
     
     const token = generateToken();
+    const expiry = Date.now() + 30 * 24 * 60 * 60 * 1000;
+    
     await ctx.db.patch(credential._id, {
-      token,
-      tokenExpiry: Date.now() + 30 * 24 * 60 * 60 * 1000,
+      sessionToken: token,
+      sessionExpiry: expiry,
     });
     
     return {
@@ -143,15 +132,13 @@ export const logIn = mutation({
 export const logOut = mutation({
   args: { token: v.string() },
   handler: async (ctx, args) => {
-    const credential = await ctx.db
-      .query("credentials")
-      .withIndex("by_token", (q) => q.eq("token", args.token))
-      .unique();
+    const credentials = await ctx.db.query("credentials").collect();
+    const credential = credentials.find(c => c.sessionToken === args.token);
     
     if (credential) {
       await ctx.db.patch(credential._id, {
-        token: null,
-        tokenExpiry: null,
+        sessionToken: "",
+        sessionExpiry: 0,
       });
     }
     
@@ -166,20 +153,14 @@ export const verifyToken = query({
       return null;
     }
     
-    const credential = await ctx.db
-      .query("credentials")
-      .withIndex("by_token", (q) => q.eq("token", args.token))
-      .unique();
+    const credentials = await ctx.db.query("credentials").collect();
+    const credential = credentials.find(c => c.sessionToken === args.token);
     
     if (!credential) {
       return null;
     }
     
-    if (credential.tokenExpiry && credential.tokenExpiry < Date.now()) {
-      await ctx.db.patch(credential._id, {
-        token: null,
-        tokenExpiry: null,
-      });
+    if (credential.sessionExpiry < Date.now()) {
       return null;
     }
     
