@@ -158,13 +158,6 @@
   .task-item.done .task-name{color:var(--green);}
   .task-delete{position:absolute;right:0;top:0;background:rgba(255,85,96,0.15);border:none;color:var(--red);font-size:12px;padding:4px 8px;border-radius:4px;cursor:pointer;opacity:1;}
 
-  /* ── DAILY INTENTION ── */
-  .intention-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:20px;}
-  .intention-label{font-size:11px;color:var(--text-dim);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;}
-  .intention-input{width:100%;background:transparent;border:none;color:var(--text);font-family:'DM Sans',sans-serif;font-size:15px;font-weight:500;outline:none;resize:none;line-height:1.5;}
-  .intention-input::placeholder{color:var(--text-dim);}
-  .intention-saved{font-size:11px;color:var(--green);margin-top:6px;min-height:14px;transition:opacity 0.3s;}
-
   /* ── WATER TRACKER ── */
   .water-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:28px;}
   .water-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;}
@@ -612,11 +605,6 @@
       </div>
       <div id="nudgeBox" class="nudge" style="display:none">
         <strong id="nudgeTitle"></strong><span id="nudgeText"></span>
-      </div>
-      <div class="intention-card">
-        <div class="intention-label">✍️ Today's intention</div>
-        <textarea class="intention-input" id="intentionInput" rows="2" placeholder="What will you focus on today?" maxlength="200" oninput="saveIntention()"></textarea>
-        <div class="intention-saved" id="intentionSaved"></div>
       </div>
       <div class="streak-row">
         <div class="streak-card fire"><div class="streak-emoji">🔥</div><div class="streak-num" id="streakNum">0</div><div class="streak-label">Day Streak</div></div>
@@ -1451,7 +1439,7 @@ function setVal(id,val){const el=$id(id);if(el)el.value=val;}
 function setCls(id,val){const el=$id(id);if(el)el.className=val;}
 function renderAll(){
   applyTimeTheme();
-  safeRun(renderHeader);safeRun(renderIntention);safeRun(renderWater);
+  safeRun(renderHeader);safeRun(renderWater);
   safeRun(renderHabits);safeRun(renderTasks);safeRun(renderLang);
   safeRun(renderStats);safeRun(renderBadges);safeRun(renderWeek);
   safeRun(renderSettings);safeRun(renderNudge);safeRun(renderLearn);
@@ -1829,22 +1817,6 @@ function confirmReset(){if(confirm('Reset ALL progress? This cannot be undone.')
 
 
 // ════════════════════════════════════
-//  DAILY INTENTION
-// ════════════════════════════════════
-function renderIntention(){
-  const inp=document.getElementById('intentionInput');
-  if(!inp)return;
-  inp.value=(todayData.intention||'');
-}
-function saveIntention(){
-  const val=document.getElementById('intentionInput').value;
-  todayData.intention=val;
-  saveState();
-  const saved=document.getElementById('intentionSaved');
-  saved.textContent='Saved ✓';
-  clearTimeout(saved._t);saved._t=setTimeout(()=>saved.textContent='',1500);
-}
-
 // ════════════════════════════════════
 //  WATER TRACKER
 // ════════════════════════════════════
