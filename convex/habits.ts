@@ -1,6 +1,26 @@
 import { query, mutation } from "./_generated/server";
 import { v } from "convex/values";
 
+export const getHabits = query({
+  args: { token: v.string() },
+  handler: async (ctx, args) => {
+    const credentials = await ctx.db.query("credentials").collect();
+    const credential = credentials.find(
+      (c: any) => c.sessionToken === args.token
+    );
+    
+    if (!credential) return [];
+    if (credential.sessionExpiry < Date.now()) return [];
+    
+    const habits = await ctx.db
+      .query("habits")
+      .withIndex("by_user", (q) => q.eq("userId", credential.userId))
+      .collect();
+
+    return habits.filter((h) => !h.archived).sort((a, b) => a.order - b.order);
+  },
+});
+
 export const listHabits = query({
   args: {},
   handler: async (ctx) => {

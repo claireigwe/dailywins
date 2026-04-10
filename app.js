@@ -863,13 +863,42 @@ onAuthChange((state, user) => {
     authScreen.style.display = 'none';
     if (onboardingContainer) onboardingContainer.style.display = 'none';
     if (!appInitialized) {
-      initStore().then(() => {
+      loadUserDataFromConvex().then(() => {
         renderAll();
         appInitialized = true;
       });
     }
   }
 });
+
+async function loadUserDataFromConvex() {
+  try {
+    const token = getStoredToken();
+    if (!token) return;
+    
+    const user = await runQuery("users.getUserData", { token });
+    if (!user) return;
+    
+    if (typeof state !== 'undefined') {
+      state.streak = user.currentStreak || 0;
+      state.bestStreak = user.bestStreak || 0;
+      state.totalPoints = user.totalPoints || 0;
+      state.totalDays = user.totalDays || 0;
+      state.settings = state.settings || {};
+      state.settings.lang = user.language || 'spanish';
+    }
+    
+    const habits = await runQuery("habits.getHabits", { token });
+    if (habits && typeof HABITS !== 'undefined') {
+      HABITS.length = 0;
+      habits.forEach(h => HABITS.push({ id: h._id, name: h.name, icon: h.icon, pts: h.points, desc: h.description }));
+    }
+    
+    console.log('User data loaded from Convex');
+  } catch (error) {
+    console.error('Failed to load user data:', error);
+  }
+}
 
 // Auth button handlers
 document.getElementById('tab-login').addEventListener('click', () => {

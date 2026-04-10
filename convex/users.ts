@@ -1,6 +1,32 @@
 import { query, mutation } from "./_generated/server";
 import { v } from "convex/values";
 
+export const getUserData = query({
+  args: { token: v.string() },
+  handler: async (ctx, args) => {
+    const credentials = await ctx.db.query("credentials").collect();
+    const credential = credentials.find(
+      (c: any) => c.sessionToken === args.token
+    );
+    
+    if (!credential) return null;
+    if (credential.sessionExpiry < Date.now()) return null;
+    
+    const user = await ctx.db.get(credential.userId);
+    if (!user) return null;
+    
+    return {
+      currentStreak: user.currentStreak,
+      bestStreak: user.bestStreak,
+      totalPoints: user.totalPoints,
+      totalDays: user.totalDays,
+      language: user.language,
+      waterGoal: user.waterGoal,
+      onboardingComplete: user.onboardingComplete,
+    };
+  },
+});
+
 export const getCurrentUser = query({
   args: {},
   handler: async (ctx) => {
