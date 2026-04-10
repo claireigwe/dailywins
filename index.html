@@ -46,7 +46,8 @@
   @keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
   .section-title{font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:1.5px;color:var(--text);margin:20px 0 12px;}
   .section-title span{color:var(--gold);}
-  .section-title.has-btn{display:flex;justify-content:space-between;align-items:center;gap:12px;margin:20px 0 12px;}
+  .section-title.has-btn{display:flex;align-items:center;gap:12px;margin:20px 0 12px;}
+  .section-title.has-btn .title-text{white-space:nowrap;}
   .streak-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px;}
   .streak-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;text-align:center;position:relative;overflow:hidden;}
   .streak-card.fire{border-color:#ff6b35;}
@@ -621,7 +622,7 @@
         <div class="streak-card"><div class="streak-emoji">⭐</div><div class="streak-num" id="pointsNum">0</div><div class="streak-label">Total Points</div></div>
       </div>
       <div class="section-title has-btn">
-        TODAY'S <span>HABITS</span>
+        <span class="title-text">TODAY'S <span>HABITS</span></span>
         <button class="add-task-btn" onclick="openTaskModal()">＋ Add Daily Task</button>
       </div>
       <div class="habit-list" id="habitList"></div>
