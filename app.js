@@ -1054,7 +1054,12 @@ console.log('Elements found:', {
   onboardingContainer: !!onboardingContainer
 });
 
-loadingOverlay.style.display = 'none';
-authScreen.style.display = 'flex';
+// Keep loading overlay visible until auth is determined
+loadingOverlay.style.display = 'flex';
+authScreen.style.display = 'none';
 window.addEventListener('error', (e) => console.error('Global error:', e.error));
-initApp().catch(e => console.error('Init error:', e));
+initApp().catch(e => {
+  console.error('Init error:', e);
+  hideLoading();
+  showAuth();
+});
