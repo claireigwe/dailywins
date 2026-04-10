@@ -3,6 +3,5 @@
   "buildCommand": "",
   "outputDirectory": ".",
   "installCommand": "",
-  "devCommand": "",
-  "ignoreBuildStep": true
+  "devCommand": ""
 }
