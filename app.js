@@ -864,7 +864,11 @@ onAuthChange((state, user) => {
     if (onboardingContainer) onboardingContainer.style.display = 'none';
     if (!appInitialized) {
       loadUserDataFromConvex().then(() => {
-        renderAll();
+        // Call render functions from index.html scope
+        if (typeof renderHabits === 'function') renderHabits();
+        if (typeof renderWater === 'function') renderWater();
+        if (typeof renderHeader === 'function') renderHeader();
+        if (typeof renderLang === 'function') renderLang();
         appInitialized = true;
       });
     }
@@ -902,37 +906,13 @@ async function loadUserDataFromConvex() {
     window.WATER_GOAL = user.waterGoal || 8;
     console.log('WATER_GOAL set to:', window.WATER_GOAL);
     
-    // Trigger a custom event to tell the page to update
-    window.dispatchEvent(new CustomEvent('convexDataLoaded'));
-    
     console.log('User data loaded from Convex');
   } catch (error) {
     console.error('Failed to load user data:', error);
   }
 }
 
-// Listen for Convex data loaded event
-if (typeof window !== 'undefined') {
-  window.addEventListener('convexDataLoaded', () => {
-    console.log('convexDataLoaded event received, userHabits:', window.userHabits);
-    // Update HABITS in the main page scope
-    if (typeof HABITS !== 'undefined' && window.userHabits) {
-      HABITS.length = 0;
-      window.userHabits.forEach(h => {
-        HABITS.push({ id: h._id, name: h.name, icon: h.icon, pts: h.points, desc: h.description });
-      });
-      console.log('HABITS updated:', HABITS);
-    }
-    // Re-render all sections
-    setTimeout(() => {
-      if (typeof renderHabits === 'function') renderHabits();
-      if (typeof renderWater === 'function') renderWater();
-      if (typeof renderHeader === 'function') renderHeader();
-      if (typeof renderLang === 'function') renderLang();
-      if (typeof renderAll === 'function') renderAll();
-    }, 100);
-  });
-}
+// Note: render functions are now called directly after loadUserDataFromConvex()
   });
 }
 
