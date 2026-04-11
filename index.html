@@ -1420,22 +1420,23 @@ const defaultHABITS = [
   {id:'eat',name:'Ate Healthy',icon:'🥗',pts:25,sub:'Choose whole foods today'},
   {id:'lang',name:'Language Practice',icon:'🌍',pts:15,sub:'Complete the daily challenge below'},
 ];
-let HABITS = defaultHABITS;
+window.HABITS = defaultHABITS;
 try {
   const saved = localStorage.getItem(HABITS_KEY);
   if (saved) {
     const parsed = JSON.parse(saved);
     if (parsed && Array.isArray(parsed) && parsed.length > 0) {
-      HABITS = parsed;
+      window.HABITS = parsed;
     }
   }
 } catch(e) {}
-// Make HABITS globally accessible and saveable
-window.HABITS = HABITS;
+// Make saveHabits globally accessible
 window.saveHABITS = function(h) {
-  HABITS = h;
-  localStorage.setItem(HABITS_KEY, JSON.stringify(HABITS));
+  window.HABITS = h;
+  localStorage.setItem(HABITS_KEY, JSON.stringify(h));
 };
+// Also expose HABITS for reading
+const HABITS = window.HABITS;
 
 const BADGES=[
   {id:'first',icon:'🌱',name:'First Step',req:'Complete day 1',fn:s=>s.totalDays>=1},
@@ -1557,8 +1558,7 @@ function renderHeader(){
 }
 
 function renderHabits(){
-  // Use window.HABITS (saved in localStorage) or fallback to default
-  const habits = (window.HABITS && window.HABITS.length > 0) ? window.HABITS : HABITS;
+  const habits = window.HABITS || defaultHABITS;
   console.log('renderHabits called, habits:', habits);
   const list=document.getElementById('habitList');list.innerHTML='';
   if (habits.length === 0) {
@@ -1861,11 +1861,7 @@ function changeTemplate(val){
   const template=TEMPLATES[val];
   if(template){
     const newHabits = template.habits.map(h => ({...h, id: h.name.toLowerCase().replace(/\s+/g, '-'), sub: h.description || ''}));
-    if (typeof window.saveHABITS === 'function') {
-      window.saveHABITS(newHabits);
-    }
-    HABITS.length = 0;
-    newHabits.forEach(h => HABITS.push(h));
+    window.saveHABITS(newHabits);
     delete todayData;
     window.todayData = {done:{}, water:0};
     saveState();
