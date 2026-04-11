@@ -123,6 +123,14 @@ async function checkAuth() {
   
   if (!isConnected()) {
     console.warn('Convex not connected, using offline mode');
+    const token = getStoredToken();
+    if (token) {
+      // Keep user logged in even if Convex is temporarily unavailable
+      authState = AUTH_STATES.OFFLINE;
+      currentUser = { _id: 'offline', email: 'offline' };
+      notifyAuthChange();
+      return { state: authState, user: currentUser };
+    }
     authState = AUTH_STATES.OFFLINE;
     currentUser = null;
     notifyAuthChange();
@@ -145,21 +153,16 @@ async function checkAuth() {
       currentUser = user;
       authState = user.onboardingComplete ? AUTH_STATES.LOGGED_IN : AUTH_STATES.ONBOARDING;
     } else {
+      // Token might be invalid or user deleted - clear it
       storeToken(null);
       currentUser = null;
       authState = AUTH_STATES.LOGGED_OUT;
     }
   } catch (error) {
     console.error("Auth check failed:", error);
-    // Keep the token - only clear on explicit auth failures, not network errors
-    if (error.message && error.message.includes("Invalid token")) {
-      storeToken(null);
-      currentUser = null;
-      authState = AUTH_STATES.LOGGED_OUT;
-    } else {
-      // For network errors or other issues, try offline mode but keep token
-      authState = AUTH_STATES.OFFLINE;
-    }
+    // Keep user logged in for any error - they'll re-authenticate when Convex is back
+    currentUser = { _id: 'pending', email: 'pending' };
+    authState = AUTH_STATES.OFFLINE;
   }
   
   notifyAuthChange();
