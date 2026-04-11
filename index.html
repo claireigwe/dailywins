@@ -1412,12 +1412,30 @@ const LANG_DATA={
   ]
 };
 
-const HABITS=[
+// Load habits from localStorage or use defaults
+const HABITS_KEY = 'dailywins_habits';
+const defaultHABITS = [
   {id:'wake',name:'Woke Up Early',icon:'🌅',pts:20,sub:'Rise before your target time'},
   {id:'workout',name:'Worked Out',icon:'💪',pts:30,sub:'Any exercise counts — just move!'},
   {id:'eat',name:'Ate Healthy',icon:'🥗',pts:25,sub:'Choose whole foods today'},
   {id:'lang',name:'Language Practice',icon:'🌍',pts:15,sub:'Complete the daily challenge below'},
 ];
+let HABITS = defaultHABITS;
+try {
+  const saved = localStorage.getItem(HABITS_KEY);
+  if (saved) {
+    const parsed = JSON.parse(saved);
+    if (parsed && Array.isArray(parsed) && parsed.length > 0) {
+      HABITS = parsed;
+    }
+  }
+} catch(e) {}
+// Make HABITS globally accessible and saveable
+window.HABITS = HABITS;
+window.saveHABITS = function(h) {
+  HABITS = h;
+  localStorage.setItem(HABITS_KEY, JSON.stringify(HABITS));
+};
 
 const BADGES=[
   {id:'first',icon:'🌱',name:'First Step',req:'Complete day 1',fn:s=>s.totalDays>=1},
@@ -1539,11 +1557,8 @@ function renderHeader(){
 }
 
 function renderHabits(){
-  // Default to local HABITS, use Convex data if available
-  let habits = HABITS;
-  if (typeof window !== 'undefined' && window.userHabits && window.userHabits.length > 0) {
-    habits = window.userHabits.map(h => ({ id: h._id, name: h.name, icon: h.icon, pts: h.points || 20, desc: h.description || '' }));
-  }
+  // Use window.HABITS (saved in localStorage) or fallback to default
+  const habits = (window.HABITS && window.HABITS.length > 0) ? window.HABITS : HABITS;
   console.log('renderHabits called, habits:', habits);
   const list=document.getElementById('habitList');list.innerHTML='';
   if (habits.length === 0) {
@@ -1845,10 +1860,14 @@ function changeTemplate(val){
   state.settings.template=val;
   const template=TEMPLATES[val];
   if(template){
-    HABITS.length=0;
-    template.habits.forEach(h=>HABITS.push({...h,completed:false}));
+    const newHabits = template.habits.map(h => ({...h, id: h.name.toLowerCase().replace(/\s+/g, '-'), sub: h.description || ''}));
+    if (typeof window.saveHABITS === 'function') {
+      window.saveHABITS(newHabits);
+    }
+    HABITS.length = 0;
+    newHabits.forEach(h => HABITS.push(h));
     delete todayData;
-    window.todayData={done:{}};
+    window.todayData = {done:{}, water:0};
     saveState();
     renderHabits();
     renderSettings();
