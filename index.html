@@ -1868,7 +1868,13 @@ function selectTemplate(val){
     document.getElementById('templateMenu').classList.remove('open');
     document.querySelectorAll('#templateMenu .dropdown-option').forEach(o=>o.classList.remove('selected'));
     document.querySelector(`#templateMenu [data-value="${val}"]`).classList.add('selected');
-    changeTemplate(val);
+    const newHabits = template.habits.map(h => ({...h, id: h.name.toLowerCase().replace(/\s+/g, '-'), sub: h.description || ''}));
+    window.saveHABITS(newHabits);
+    delete todayData;
+    window.todayData = {done:{}, water:0};
+    saveState();
+    renderHabits();
+    toast('Category changed to '+template.name+'! 🎯');
   }
 }
 function selectLang(val){
