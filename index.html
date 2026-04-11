@@ -1460,8 +1460,9 @@ if(state.lastDate!==today){
   state.langIndex=Math.floor(Math.random()*LANG_DATA[state.settings.lang].length);
   state.lastDate=today;state.totalDays++;saveState();
 }
-if(!state.days[today])state.days[today]={done:{},langDone:false};
+if(!state.days[today])state.days[today]={done:{},langDone:false,water:0};
 const todayData=state.days[today];
+window.todayData = todayData;
 
 let quizQ={score:0,streak:0,num:0,answered:false};
 
@@ -1538,10 +1539,11 @@ function renderHeader(){
 }
 
 function renderHabits(){
-  // Use habits from Convex if available, otherwise use local HABITS
-  const habits = (typeof window !== 'undefined' && window.userHabits) 
-    ? window.userHabits.map(h => ({ id: h._id, name: h.name, icon: h.icon, pts: h.points, desc: h.description }))
-    : HABITS;
+  // Default to local HABITS, use Convex data if available
+  let habits = HABITS;
+  if (typeof window !== 'undefined' && window.userHabits && window.userHabits.length > 0) {
+    habits = window.userHabits.map(h => ({ id: h._id, name: h.name, icon: h.icon, pts: h.points || 20, desc: h.description || '' }));
+  }
   console.log('renderHabits called, habits:', habits);
   const list=document.getElementById('habitList');list.innerHTML='';
   if (habits.length === 0) {
