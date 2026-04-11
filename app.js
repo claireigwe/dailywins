@@ -1116,9 +1116,11 @@ async function loadUserDataFromConvex() {
       state.settings = state.settings || {};
       state.settings.lang = user.language || 'spanish';
       state.settings.template = user.template || 'health';
+      state.userName = user.name || '';
       if (state.settings.theme) {
         document.documentElement.setAttribute('data-theme', state.settings.theme);
       }
+      saveState();
       console.log('State updated, totalPoints preserved from localStorage:', state.totalPoints);
     }
     

@@ -23,6 +23,7 @@ export const getUserData = query({
       language: user.language,
       waterGoal: user.waterGoal,
       onboardingComplete: user.onboardingComplete,
+      name: user.name,
     };
   },
 });

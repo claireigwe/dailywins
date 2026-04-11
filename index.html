@@ -1485,7 +1485,7 @@ function todayKey(){return new Date().toISOString().slice(0,10);}
 function loadState(){try{return JSON.parse(localStorage.getItem('dw_state')||'null');}catch{return null;}}
 function saveState(){localStorage.setItem('dw_state',JSON.stringify(state));}
 
-let state=loadState()||{streak:0,bestStreak:0,totalPoints:0,totalDays:0,langCorrect:0,perfectDays:0,langIndex:0,langAnswered:false,masteredLetters:[],curLetterIdx:0,tasks:[],settings:{lang:'spanish',template:'health',wakeTime:'06:00',notif:false,sound:true},days:{},lastDate:null};
+let state=loadState()||{streak:0,bestStreak:0,totalPoints:0,totalDays:0,langCorrect:0,perfectDays:0,langIndex:0,langAnswered:false,masteredLetters:[],curLetterIdx:0,tasks:[],userName:'',settings:{lang:'spanish',template:'health',wakeTime:'06:00',notif:false,sound:true},days:{},lastDate:null};
 if(!state.tasks)state.tasks=[];
 if(!state.vocabSRS)state.vocabSRS={};
 if(!state.vocabIdx)state.vocabIdx=0;
@@ -1571,7 +1571,9 @@ function renderHeader(){
   const d=new Date();
   setText('hDate',days[d.getDay()]+', '+months[d.getMonth()]+' '+d.getDate());
   const h=d.getHours();
-  setText('hGreeting',h<12?'Good morning ☀️':h<17?'Good afternoon 🌤':h<20?'Good evening 🌆':'Good night 🌙');
+  const userName = state.userName ? ', '+state.userName : '';
+  const greeting = h<12?'Good morning'+userName+' ☀️':h<17?'Good afternoon'+userName+' 🌤':h<20?'Good evening'+userName+' 🌆':'Good night'+userName+' 🌙';
+  setText('hGreeting',greeting);
   setText('streakNum',state.streak);
   setText('pointsNum',state.totalPoints);
   const prog=getLvlProg(state.totalPoints);
