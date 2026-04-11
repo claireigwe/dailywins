@@ -83,7 +83,10 @@
   #header .xp-row{display:flex;justify-content:space-between;font-size:11px;color:var(--text-dim);}
   #content{flex:1;overflow-y:auto;padding:16px;scroll-behavior:smooth;background:transparent;width:100%;}
   #content::-webkit-scrollbar{display:none;}
-  #nav{flex-shrink:0;position:fixed;bottom:0;left:0;right:0;width:100%;background:var(--surface);box-shadow:0 -4px 30px rgba(123,127,232,0.1);display:flex;padding:10px 16px calc(10px + env(safe-area-inset-bottom,10px));border-radius:24px 24px 0 0;}
+  #nav{flex-shrink:0;width:100%;background:var(--surface);box-shadow:0 -4px 30px rgba(123,127,232,0.1);display:flex;padding:10px 16px calc(10px + env(safe-area-inset-bottom,10px));border-radius:24px 24px 0 0;}
+  @media (min-width: 520px) {
+    #nav{width:430px;margin:0 auto;}
+  }
   .header-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;}
   .logo{font-family:'Playfair Display',serif;font-size:24px;font-weight:600;color:var(--text);line-height:1;}
   .logo span{color:var(--heading);}
@@ -927,15 +930,13 @@
       <button class="reset-btn" onclick="confirmReset()">🗑 Reset All Progress</button>
     </div>
 
+    <nav id="nav" role="navigation" aria-label="Main navigation">
+      <button class="nav-btn active" onclick="showScreen('today',this)" aria-current="page" aria-label="Today tab"><span class="nav-icon" aria-hidden="true">🏠</span><span>Today</span></button>
+      <button class="nav-btn" onclick="showScreen('lang',this)" aria-label="Language tab"><span class="nav-icon" aria-hidden="true">🌍</span><span>Language</span></button>
+      <button class="nav-btn" onclick="showScreen('stats',this)" aria-label="Statistics tab"><span class="nav-icon" aria-hidden="true">📊</span><span>Stats</span></button>
+      <button class="nav-btn" onclick="showScreen('settings',this)" aria-label="Settings tab"><span class="nav-icon" aria-hidden="true">⚙️</span><span>Settings</span></button>
+    </nav>
   </div>
-
-  <nav id="nav" role="navigation" aria-label="Main navigation">
-    <button class="nav-btn active" onclick="showScreen('today',this)" aria-current="page" aria-label="Today tab"><span class="nav-icon" aria-hidden="true">🏠</span><span>Today</span></button>
-    <button class="nav-btn" onclick="showScreen('lang',this)" aria-label="Language tab"><span class="nav-icon" aria-hidden="true">🌍</span><span>Language</span></button>
-    <button class="nav-btn" onclick="showScreen('stats',this)" aria-label="Statistics tab"><span class="nav-icon" aria-hidden="true">📊</span><span>Stats</span></button>
-    <button class="nav-btn" onclick="showScreen('settings',this)" aria-label="Settings tab"><span class="nav-icon" aria-hidden="true">⚙️</span><span>Settings</span></button>
-  </nav>
-</div>
 <div id="toast" role="status" aria-live="polite" aria-atomic="true"></div>
 
 <script>
