@@ -403,9 +403,18 @@
   .toggle.on{background:var(--purple);}
   .toggle::after{content:'';position:absolute;top:3px;left:3px;width:26px;height:26px;border-radius:50%;background:#fff;box-shadow:0 2px 4px rgba(0,0,0,0.1);transition:transform 0.3s;}
   .toggle.on::after{transform:translateX(20px);}
-  .lang-select{background:var(--surface);border:1px solid var(--border);color:var(--text);font-family:'Instrument Sans',sans-serif;font-size:14px;padding:10px 40px 10px 16px;border-radius:var(--radius-full);cursor:pointer;appearance:none;-webkit-appearance:none;background-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D'http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg'%20width%3D'16'%20height%3D'16'%20viewBox%3D'0%200%2024%2024'%20fill%3D'none'%20stroke%3D'%237B7FE8'%20stroke-width%3D'2'%3E%3Cpath%20d%3D'M6%209%20l4%204%204-4'%2F%3E%3C%2Fsvg%3E");background-repeat:no-repeat;background-position:right 14px center;}
-  .lang-select:focus{outline:none;border-color:var(--purple);box-shadow:0 0 0 2px rgba(123,127,232,0.2);}
-  .lang-select option{background:var(--surface);color:var(--text);padding:12px 16px;}
+  .lang-select{display:none;}
+  .custom-dropdown{position:relative;min-width:180px;}
+  .dropdown-trigger{display:flex;align-items:center;justify-content:space-between;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-full);padding:10px 16px;cursor:pointer;transition:all 0.2s;}
+  .dropdown-trigger:hover{border-color:var(--purple);}
+  .dropdown-value{font-size:14px;color:var(--text);}
+  .dropdown-arrow{font-size:10px;color:var(--purple);margin-left:8px;}
+  .dropdown-menu{display:none;position:absolute;top:calc(100% + 8px);left:0;right:0;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);box-shadow:var(--shadow);z-index:100;overflow:hidden;}
+  .dropdown-menu.open{display:block;}
+  .dropdown-option{padding:12px 16px;font-size:14px;color:var(--text);cursor:pointer;transition:background 0.2s;border-bottom:1px solid var(--border);}
+  .dropdown-option:last-child{border-bottom:none;}
+  .dropdown-option:hover{background:var(--surface2);}
+  .dropdown-option.selected{background:rgba(123,127,232,0.1);color:var(--purple);}
   .reset-btn{width:100%;margin-top:24px;padding:14px;background:rgba(224,112,128,0.1);border:none;border-radius:var(--radius);color:var(--red);font-family:'Instrument Sans',sans-serif;font-size:15px;font-weight:500;cursor:pointer;}
   .reset-btn:active{opacity:0.8;}
   .logout-btn{width:100%;margin-top:12px;padding:14px;background:var(--surface2);border:none;border-radius:var(--radius);color:var(--text);font-family:'Instrument Sans',sans-serif;font-size:15px;font-weight:500;cursor:pointer;min-height:48px;}
@@ -905,20 +914,33 @@
       <h2 class="section-title">⚙️ <span>SETTINGS</span></h2>
       <div class="setting-row">
         <div><div class="setting-label">Category</div><div class="setting-sub">Your habit template</div></div>
-        <select class="lang-select" id="templateSelect" onchange="changeTemplate(this.value)">
-          <option value="health">💪 Health & Wellness</option>
-          <option value="productivity">🎯 Productivity</option>
-        </select>
+        <div class="custom-dropdown" id="templateDropdown">
+          <div class="dropdown-trigger" onclick="toggleDropdown('templateDropdown')">
+            <span class="dropdown-value" id="templateValue">💪 Health & Wellness</span>
+            <span class="dropdown-arrow">▼</span>
+          </div>
+          <div class="dropdown-menu" id="templateMenu">
+            <div class="dropdown-option" data-value="health" onclick="selectTemplate('health')">💪 Health & Wellness</div>
+            <div class="dropdown-option" data-value="productivity" onclick="selectTemplate('productivity')">🎯 Productivity</div>
+          </div>
+        </div>
       </div>
       <div class="setting-row">
         <div><div class="setting-label">Language</div><div class="setting-sub">Daily challenge language</div></div>
-        <select class="lang-select" id="langSelect" onchange="changeLang(this.value)">
-          <option value="spanish">🇪🇸 Spanish</option>
-          <option value="french">🇫🇷 French</option>
-          <option value="german">🇩🇪 German</option>
-          <option value="japanese">🇯🇵 Japanese</option>
-          <option value="yoruba">🇳🇬 Yoruba</option>
-        </select>
+        <div class="custom-dropdown" id="langDropdown">
+          <div class="dropdown-trigger" onclick="toggleDropdown('langDropdown')">
+            <span class="dropdown-value" id="langValue">🇪🇸 Spanish</span>
+            <span class="dropdown-arrow">▼</span>
+          </div>
+          <div class="dropdown-menu" id="langMenu">
+            <div class="dropdown-option" data-value="spanish" onclick="selectLang('spanish')">🇪🇸 Spanish</div>
+            <div class="dropdown-option" data-value="french" onclick="selectLang('french')">🇫🇷 French</div>
+            <div class="dropdown-option" data-value="german" onclick="selectLang('german')">🇩🇪 German</div>
+            <div class="dropdown-option" data-value="japanese" onclick="selectLang('japanese')">🇯🇵 Japanese</div>
+            <div class="dropdown-option" data-value="yoruba" onclick="selectLang('yoruba')">🇳🇬 Yoruba</div>
+          </div>
+        </div>
+      </div>
       </div>
       <div class="setting-row">
         <div><div class="setting-label">Wake-up alarm</div><div class="setting-sub" id="alarmSub">Tap to enable a daily alarm</div></div>
@@ -1834,9 +1856,55 @@ function checkBadges(){
 // ════════════════════════════════════
 //  SETTINGS
 // ════════════════════════════════════
+function toggleDropdown(id){
+  const menu=document.getElementById(id+'Menu');
+  document.querySelectorAll('.dropdown-menu').forEach(m=>m.classList.remove('open'));
+  menu.classList.toggle('open');
+}
+function selectTemplate(val){
+  const template=TEMPLATES[val];
+  if(template){
+    state.settings.template=val;
+    document.getElementById('templateValue').textContent=template.emoji+' '+template.name;
+    document.getElementById('templateMenu').classList.remove('open');
+    document.querySelectorAll('#templateMenu .dropdown-option').forEach(o=>o.classList.remove('selected'));
+    document.querySelector(`#templateMenu [data-value="${val}"]`).classList.add('selected');
+    changeTemplate(val);
+  }
+}
+function selectLang(val){
+  const langMap={spanish:'🇪🇸 Spanish',french:'🇫🇷 French',german:'🇩🇪 German',japanese:'🇯🇵 Japanese',yoruba:'🇳🇬 Yoruba'};
+  state.settings.lang=val;
+  state.langIndex=0;
+  state.langAnswered=false;
+  saveState();
+  document.getElementById('langValue').textContent=langMap[val]||val;
+  document.getElementById('langMenu').classList.remove('open');
+  document.querySelectorAll('#langMenu .dropdown-option').forEach(o=>o.classList.remove('selected'));
+  document.querySelector(`#langMenu [data-value="${val}"]`).classList.add('selected');
+  renderLang();
+  renderSettings();
+  toast('Language changed! 🌍');
+}
+// Close dropdowns when clicking outside
+document.addEventListener('click',function(e){
+  if(!e.target.closest('.custom-dropdown')){
+    document.querySelectorAll('.dropdown-menu').forEach(m=>m.classList.remove('open'));
+  }
+});
 function renderSettings(){
-  document.getElementById('templateSelect').value=state.settings.template||'health';
-  document.getElementById('langSelect').value=state.settings.lang;
+  const template=state.settings.template||'health';
+  const templateData=TEMPLATES[template];
+  document.getElementById('templateValue').textContent=(templateData?templateData.emoji+' '+templateData.name:'Health & Wellness');
+  document.querySelectorAll('#templateMenu .dropdown-option').forEach(o=>{
+    o.classList.toggle('selected',o.dataset.value===template);
+  });
+  const lang=state.settings.lang||'spanish';
+  const langMap={spanish:'🇪🇸 Spanish',french:'🇫🇷 French',german:'🇩🇪 German',japanese:'🇯🇵 Japanese',yoruba:'🇳🇬 Yoruba'};
+  document.getElementById('langValue').textContent=langMap[lang]||lang;
+  document.querySelectorAll('#langMenu .dropdown-option').forEach(o=>{
+    o.classList.toggle('selected',o.dataset.value===lang);
+  });
   renderAlarmStatus();
   document.getElementById('wakeTime').value=state.settings.wakeTime||'06:00';
   document.getElementById('notifToggle').className='toggle'+(state.settings.notif?' on':'');
@@ -1856,21 +1924,6 @@ function formatTime(t){
   const ampm=h>=12?'PM':'AM';
   const hr=h%12||12;
   return hr+':'+(m<10?'0'+m:m)+' '+ampm;
-}
-function changeLang(val){state.settings.lang=val;state.langIndex=0;state.langAnswered=false;saveState();renderLang();renderSettings();toast('Language changed! 🌍');}
-function changeTemplate(val){
-  state.settings.template=val;
-  const template=TEMPLATES[val];
-  if(template){
-    const newHabits = template.habits.map(h => ({...h, id: h.name.toLowerCase().replace(/\s+/g, '-'), sub: h.description || ''}));
-    window.saveHABITS(newHabits);
-    delete todayData;
-    window.todayData = {done:{}, water:0};
-    saveState();
-    renderHabits();
-    renderSettings();
-    toast('Category changed to '+template.name+'! 🎯');
-  }
 }
 function saveSettings(){state.settings.wakeTime=document.getElementById('wakeTime').value;saveState();}
 function saveAlarmTime(){
