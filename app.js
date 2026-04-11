@@ -14,7 +14,7 @@ function waitForConvex() {
   return new Promise((resolve, reject) => {
     const timeout = setTimeout(() => {
       reject(new Error('Convex CDN load timeout'));
-    }, 10000);
+    }, 5000);
     
     function check() {
       if (window.convex && window.convex.ConvexClient) {
@@ -910,8 +910,6 @@ async function initApp() {
       return;
     }
     
-    hideLoading();
-    
     if (state === AUTH_STATES.LOGGED_OUT) {
       // Check if we have a token and logged_in flag - if so, stay in app
       const token = getStoredToken();
@@ -1174,93 +1172,45 @@ async function loadUserDataFromConvex() {
 // Real-time sync subscriptions
 let subscriptions = [];
 
-// Polling for real-time sync (since subscriptions not available in CDN bundle)
-let syncInterval = null;
-let lastSyncData = { tasks: null, habitLogs: null, water: null, stats: null };
-
-function startPolling() {
-  if (syncInterval) return; // Already polling
+// Sync - just load from server once when needed
+function syncFromServer() {
+  const token = getStoredToken();
+  if (!token || !isConnected()) return;
   
-  console.log('Starting polling for data sync...');
-  syncInterval = setInterval(async () => {
-    const token = getStoredToken();
-    if (!token || !isConnected()) return;
-    
-    const today = new Date().toISOString().slice(0, 10);
-    
-    try {
-      // Check tasks
-      const tasks = await runQuery("tasks.listTasks", { token });
-      if (JSON.stringify(tasks) !== JSON.stringify(lastSyncData.tasks)) {
-        lastSyncData.tasks = tasks;
-        if (typeof state !== 'undefined' && tasks) {
-          state.tasks = tasks.map(t => ({...t, done: t.completed}));
-          saveState();
-          if (typeof renderTasks === 'function') renderTasks();
-          console.log('Tasks synced from server');
-        }
-      }
-      
-      // Check habit logs
-      const logs = await runQuery("habits.getHabitLogs", { token, date: today });
-      if (JSON.stringify(logs) !== JSON.stringify(lastSyncData.habitLogs)) {
-        lastSyncData.habitLogs = logs;
-        if (typeof todayData !== 'undefined' && logs) {
-          todayData.done = {};
-          logs.forEach(log => {
-            todayData.done[log.habitId] = true;
-          });
-          saveState();
-          if (typeof renderHabits === 'function') renderHabits();
-          console.log('Habit logs synced from server');
-        }
-      }
-      
-      // Check water
-      const water = await runQuery("water.getWaterLog", { token, date: today });
-      if (JSON.stringify(water) !== JSON.stringify(lastSyncData.water)) {
-        lastSyncData.water = water;
-        if (typeof todayData !== 'undefined' && water) {
-          todayData.water = water.glasses || 0;
-          saveState();
-          if (typeof renderWater === 'function') renderWater();
-          console.log('Water synced from server');
-        }
-      }
-      
-      // Check stats
-      const stats = await runQuery("users.getStats", { token });
-      if (JSON.stringify(stats) !== JSON.stringify(lastSyncData.stats)) {
-        lastSyncData.stats = stats;
-        if (typeof state !== 'undefined' && stats) {
-          if (!state.totalPoints || state.totalPoints === 0) {
-            state.totalPoints = stats.totalPoints || 0;
-          }
-          state.streak = stats.currentStreak || 0;
-          state.bestStreak = stats.bestStreak || 0;
-          state.totalDays = stats.totalDays || 0;
-          saveState();
-          if (typeof renderHeader === 'function') renderHeader();
-          console.log('Stats synced from server');
-        }
-      }
-    } catch (e) {
-      // Silently ignore polling errors
+  const today = new Date().toISOString().slice(0, 10);
+  
+  // Sync tasks
+  runQuery("tasks.listTasks", { token }).then(tasks => {
+    if (tasks && typeof state !== 'undefined') {
+      state.tasks = tasks.map(t => ({...t, done: t.completed}));
+      saveState();
+      if (typeof renderTasks === 'function') renderTasks();
     }
-  }, 5000); // Poll every 5 seconds
-}
-
-function stopPolling() {
-  if (syncInterval) {
-    clearInterval(syncInterval);
-    syncInterval = null;
-    console.log('Stopped polling');
-  }
+  }).catch(() => {});
+  
+  // Sync habit logs
+  runQuery("habits.getHabitLogs", { token, date: today }).then(logs => {
+    if (logs && typeof todayData !== 'undefined') {
+      todayData.done = {};
+      logs.forEach(log => { todayData.done[log.habitId] = true; });
+      saveState();
+      if (typeof renderHabits === 'function') renderHabits();
+    }
+  }).catch(() => {});
+  
+  // Sync water
+  runQuery("water.getWaterLog", { token, date: today }).then(water => {
+    if (water && typeof todayData !== 'undefined') {
+      todayData.water = water.glasses || 0;
+      saveState();
+      if (typeof renderWater === 'function') renderWater();
+    }
+  }).catch(() => {});
 }
 
 // Alias for backward compatibility
 function setupConvexSubscriptions() {
-  startPolling();
+  // Don't auto-sync, just wait for user to refresh or do initial load
 }
 
 // Auth button handlers - fixed
