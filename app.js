@@ -1015,6 +1015,8 @@ onAuthChange((state, user) => {
     console.log('Has token and was logged in - staying in app');
     authScreen.style.display = 'none';
     if (onboardingContainer) onboardingContainer.style.display = 'none';
+    // Set up subscriptions for real-time sync
+    setupConvexSubscriptions();
     // Render UI immediately
     if (typeof renderHabits === 'function') renderHabits();
     if (typeof renderWater === 'function') renderWater();
@@ -1182,6 +1184,25 @@ function setupConvexSubscriptions() {
   
   const today = new Date().toISOString().slice(0, 10);
   
+  // Subscribe to habits list
+  const habitsSub = convexClient.subscription(api.habits.getHabits, { token }, (habits) => {
+    console.log('Habits updated from server:', habits);
+    if (habits && habits.length > 0) {
+      const convexHabits = habits.map(h => ({
+        id: h._id,
+        name: h.name,
+        icon: h.icon,
+        pts: h.points || 20,
+        sub: h.description || ''
+      }));
+      if (typeof window.saveHABITS === 'function') {
+        window.saveHABITS(convexHabits);
+      }
+      if (typeof renderHabits === 'function') renderHabits();
+    }
+  });
+  subscriptions.push(habitsSub);
+  
   // Subscribe to tasks
   const tasksSub = convexClient.subscription(api.tasks.listTasks, { token }, (tasks) => {
     console.log('Tasks updated from server:', tasks);
@@ -1206,6 +1227,17 @@ function setupConvexSubscriptions() {
     }
   });
   subscriptions.push(habitLogsSub);
+  
+  // Subscribe to water logs for today
+  const waterSub = convexClient.subscription(api.water.getWaterLog, { token, date: today }, (water) => {
+    console.log('Water updated from server:', water);
+    if (typeof todayData !== 'undefined' && water) {
+      todayData.water = water.glasses || 0;
+      saveState();
+      if (typeof renderWater === 'function') renderWater();
+    }
+  });
+  subscriptions.push(waterSub);
   
   // Subscribe to user stats (streak, points)
   const statsSub = convexClient.subscription(api.users.getStats, { token }, (stats) => {

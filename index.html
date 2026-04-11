@@ -2304,7 +2304,7 @@ function toggleHabitAnimated(id, pts, el){
     toast('Habit unchecked');
     saveState();renderHabits();renderHeader();
     // Sync to Convex
-    const token = localStorage.getItem('dw_token');
+    const token = localStorage.getItem('dailywins_token');
     if (token && window.runMutation) {
       const today = new Date().toISOString().slice(0,10);
       window.runMutation("habits.logHabitCompletion", { 
@@ -2339,7 +2339,7 @@ function toggleHabitAnimated(id, pts, el){
   saveState();renderHabits();renderHeader();checkBadges();
   
   // Sync to Convex
-  const token = localStorage.getItem('dw_token');
+  const token = localStorage.getItem('dailywins_token');
   if (token && window.runMutation) {
     const today = new Date().toISOString().slice(0,10);
     window.runMutation("habits.logHabitCompletion", { 
