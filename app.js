@@ -892,7 +892,7 @@ async function initApp() {
   await initAuth();
   console.log('Auth initialized');
   
-  try {
+    try {
     // Quick timeout - don't wait for Convex on initial load
     const timeoutPromise = new Promise(resolve => 
       setTimeout(() => resolve({ state: 'timeout', user: null }), 5000)
@@ -905,7 +905,7 @@ async function initApp() {
     
     hideLoading();
     
-    // If we have a token and were logged in before, stay in app regardless of auth state
+    // Check if we have a token and were logged in before - show app regardless of auth state
     const token = getStoredToken();
     const wasLoggedIn = localStorage.getItem(LOGGED_IN_KEY) === 'true';
     if (token && wasLoggedIn) {
@@ -925,71 +925,9 @@ async function initApp() {
       return;
     }
     
-    if (state === AUTH_STATES.LOGGED_OUT) {
-      // Check if we have a token and logged_in flag - if so, stay in app
-      const token = getStoredToken();
-      if (token && localStorage.getItem(LOGGED_IN_KEY) === 'true') {
-        // We have a token and were logged in before - stay in app
-        const screen = document.getElementById('auth-screen');
-        if (screen) screen.style.display = 'none';
-        // Render the UI immediately
-        if (typeof renderHabits === 'function') renderHabits();
-        if (typeof renderWater === 'function') renderWater();
-        if (typeof renderHeader === 'function') renderHeader();
-        if (typeof renderLang === 'function') renderLang();
-        if (typeof renderTasks === 'function') renderTasks();
-        if (typeof renderAll === 'function') renderAll();
-        appInitialized = true;
-        // Try to sync data in background
-        loadUserDataFromConvex().catch(() => {});
-        return;
-      }
-      showAuth();
-      return;
-    }
-    
-    // If OFFLINE but has a token, still show the app (offline mode)
-    if (state === AUTH_STATES.OFFLINE) {
-      const screen = document.getElementById('auth-screen');
-      if (screen) screen.style.display = 'none';
-      // Render the UI immediately
-      if (typeof renderHabits === 'function') renderHabits();
-      if (typeof renderWater === 'function') renderWater();
-      if (typeof renderHeader === 'function') renderHeader();
-      if (typeof renderLang === 'function') renderLang();
-      if (typeof renderTasks === 'function') renderTasks();
-      if (typeof renderAll === 'function') renderAll();
-      appInitialized = true;
-      // Try to sync data in background
-      loadUserDataFromConvex().catch(() => {});
-      return;
-    }
-    
-    if (state === AUTH_STATES.ONBOARDING) {
-      const container = document.getElementById('onboarding-container');
-      if (container) container.style.display = 'block';
-      renderOnboarding(container);
-      return;
-    }
-    
-    if (state === AUTH_STATES.LOGGED_IN && user) {
-      const screen = document.getElementById('auth-screen');
-      if (screen) screen.style.display = 'none';
-      // Load user data and render
-      await loadUserDataFromConvex();
-      // Set up real-time sync
-      setupConvexSubscriptions();
-      if (typeof renderHabits === 'function') renderHabits();
-      if (typeof renderWater === 'function') renderWater();
-      if (typeof renderHeader === 'function') renderHeader();
-      if (typeof renderLang === 'function') renderLang();
-      if (typeof renderTasks === 'function') renderTasks();
-      if (typeof renderAll === 'function') renderAll();
-      appInitialized = true;
-      return;
-    }
-    
+    // No token or not logged in - show auth screen
     showAuth();
+    return;
   } catch (error) {
     console.error('App initialization error:', error);
     hideLoading();
@@ -1014,97 +952,54 @@ async function initApp() {
   }
 }
 
-// Listen for auth changes
-let authChangeInitialized = false;
+// Listen for auth changes - only handle state changes, not initial call
+let firstAuthCall = true;
 onAuthChange((state, user) => {
+  if (firstAuthCall) {
+    firstAuthCall = false;
+    return; // Skip initial call, initApp handles it
+  }
+  
   console.log('Auth state changed:', state, 'user:', user);
+  
+  // If app is already initialized and we have a token, ignore state changes
+  if (appInitialized && getStoredToken()) {
+    return;
+  }
+  
   const authScreen = document.getElementById('auth-screen');
   const onboardingContainer = document.getElementById('onboarding-container');
   const token = getStoredToken();
   const wasLoggedIn = localStorage.getItem(LOGGED_IN_KEY) === 'true';
   
-  // If we have a token and were logged in, stay in the app regardless of state
+  // If we have a token and were logged in, stay in the app
   if (token && wasLoggedIn) {
     console.log('Has token and was logged in - staying in app');
-    authScreen.style.display = 'none';
+    if (authScreen) authScreen.style.display = 'none';
     if (onboardingContainer) onboardingContainer.style.display = 'none';
-    // Render UI immediately
+    // Render UI
     if (typeof renderHabits === 'function') renderHabits();
     if (typeof renderWater === 'function') renderWater();
     if (typeof renderHeader === 'function') renderHeader();
     if (typeof renderLang === 'function') renderLang();
     if (typeof renderTasks === 'function') renderTasks();
-    if (typeof renderAll === 'function') renderAll();
     appInitialized = true;
-    // Load from Convex and re-render when done
-    loadUserDataFromConvex().then(() => {
-      if (typeof renderHabits === 'function') renderHabits();
-      if (typeof renderWater === 'function') renderWater();
-      if (typeof renderHeader === 'function') renderHeader();
-      // Start background sync
-      startBackgroundSync();
-    }).catch(() => {
-      // Start background sync anyway
-      startBackgroundSync();
-    });
+    loadUserDataFromConvex().catch(() => {});
     return;
   }
   
-  if (state === AUTH_STATES.LOGGED_OUT) {
-    console.log('Showing auth screen');
-    authScreen.style.display = 'flex';
-    if (onboardingContainer) onboardingContainer.style.display = 'none';
-    appInitialized = false;
-  }
-  
-  if (state === AUTH_STATES.OFFLINE) {
-    console.log('Offline mode - showing app');
-    authScreen.style.display = 'none';
-    if (onboardingContainer) onboardingContainer.style.display = 'none';
-    if (!appInitialized) {
-      // Always render the UI, regardless of data loading success
-      if (typeof renderHabits === 'function') renderHabits();
-      if (typeof renderWater === 'function') renderWater();
-      if (typeof renderHeader === 'function') renderHeader();
-      if (typeof renderLang === 'function') renderLang();
-      if (typeof renderTasks === 'function') renderTasks();
-      if (typeof renderAll === 'function') renderAll();
-      appInitialized = true;
-      
-      // Try to load data in background
-      loadUserDataFromConvex().then(() => {
-        if (typeof renderHabits === 'function') renderHabits();
-        if (typeof renderWater === 'function') renderWater();
-        if (typeof renderHeader === 'function') renderHeader();
-      }).catch(() => {});
-    }
-  }
-  
+  // Handle other states
   if (state === AUTH_STATES.ONBOARDING) {
     console.log('Showing onboarding');
-    authScreen.style.display = 'none';
+    if (authScreen) authScreen.style.display = 'none';
     if (onboardingContainer) {
       onboardingContainer.style.display = 'block';
-      console.log('Onboarding container display set to block');
       renderOnboarding(onboardingContainer);
     }
-  }
-  
-  if (state === AUTH_STATES.LOGGED_IN) {
-    console.log('User logged in, initializing app');
-    authScreen.style.display = 'none';
+  } else if (state === AUTH_STATES.LOGGED_OUT) {
+    console.log('Showing auth screen');
+    if (authScreen) authScreen.style.display = 'flex';
     if (onboardingContainer) onboardingContainer.style.display = 'none';
-    if (!appInitialized) {
-      loadUserDataFromConvex().then(() => {
-        // Call render functions from index.html scope
-        if (typeof renderHabits === 'function') renderHabits();
-        if (typeof renderWater === 'function') renderWater();
-        if (typeof renderHeader === 'function') renderHeader();
-        if (typeof renderLang === 'function') renderLang();
-        if (typeof renderTasks === 'function') renderTasks();
-        appInitialized = true;
-      });
-    }
   }
 });
 
