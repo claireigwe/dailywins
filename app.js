@@ -59,6 +59,7 @@ const AUTH_STATES = {
 };
 
 const TOKEN_KEY = "dailywins_token";
+const LOGGED_IN_KEY = "dailywins_logged_in";
 
 let authState = AUTH_STATES.LOADING;
 let currentUser = null;
@@ -85,8 +86,10 @@ function getStoredToken() {
 function storeToken(token) {
   if (token) {
     localStorage.setItem(TOKEN_KEY, token);
+    localStorage.setItem(LOGGED_IN_KEY, 'true');
   } else {
     localStorage.removeItem(TOKEN_KEY);
+    localStorage.removeItem(LOGGED_IN_KEY);
   }
 }
 
@@ -152,17 +155,21 @@ async function checkAuth() {
     if (user) {
       currentUser = user;
       authState = user.onboardingComplete ? AUTH_STATES.LOGGED_IN : AUTH_STATES.ONBOARDING;
+      localStorage.setItem(LOGGED_IN_KEY, 'true');
     } else {
-      // Token might be invalid or user deleted - clear it
-      storeToken(null);
-      currentUser = null;
-      authState = AUTH_STATES.LOGGED_OUT;
+      // Token exists but verify returned null - this might be a temporary issue
+      // Keep the token and treat as offline mode so user stays logged in
+      console.warn('Token verification returned null, keeping offline mode');
+      currentUser = { _id: 'pending', email: 'pending' };
+      authState = AUTH_STATES.OFFLINE;
+      localStorage.setItem(LOGGED_IN_KEY, 'true');
     }
   } catch (error) {
     console.error("Auth check failed:", error);
     // Keep user logged in for any error - they'll re-authenticate when Convex is back
     currentUser = { _id: 'pending', email: 'pending' };
     authState = AUTH_STATES.OFFLINE;
+    localStorage.setItem(LOGGED_IN_KEY, 'true');
   }
   
   notifyAuthChange();
@@ -882,6 +889,15 @@ async function initApp() {
     hideLoading();
     
     if (state === AUTH_STATES.LOGGED_OUT) {
+      // Check if we have a token and logged_in flag - if so, stay in app
+      const token = getStoredToken();
+      if (token && localStorage.getItem(LOGGED_IN_KEY) === 'true') {
+        // We have a token and were logged in before - stay in app
+        const screen = document.getElementById('auth-screen');
+        if (screen) screen.style.display = 'none';
+        appInitialized = true;
+        return;
+      }
       showAuth();
       return;
     }
@@ -934,6 +950,16 @@ onAuthChange((state, user) => {
   const token = getStoredToken();
   
   if (state === AUTH_STATES.LOGGED_OUT) {
+    // Check if we have a token and were logged in before
+    const token = getStoredToken();
+    if (token && localStorage.getItem(LOGGED_IN_KEY) === 'true') {
+      // Stay in app
+      console.log('Logged out but has token - staying in app');
+      authScreen.style.display = 'none';
+      if (onboardingContainer) onboardingContainer.style.display = 'none';
+      appInitialized = true;
+      return;
+    }
     console.log('Showing auth screen');
     authScreen.style.display = 'flex';
     if (onboardingContainer) onboardingContainer.style.display = 'none';
