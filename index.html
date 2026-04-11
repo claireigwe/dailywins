@@ -1435,16 +1435,9 @@ const LANG_DATA={
   ]
 };
 
-// Load habits from localStorage or use defaults
+// Load habits from localStorage only - no defaults
 const HABITS_KEY = 'dailywins_habits';
-const defaultHABITS = [
-  {id:'wake',name:'Woke Up Early',icon:'🌅',pts:20,sub:'Rise before your target time'},
-  {id:'workout',name:'Worked Out',icon:'💪',pts:30,sub:'Any exercise counts — just move!'},
-  {id:'eat',name:'Ate Healthy',icon:'🥗',pts:25,sub:'Choose whole foods today'},
-  {id:'lang',name:'Language Practice',icon:'🌍',pts:15,sub:'Complete the daily challenge below'},
-];
-// Start with defaults, then immediately load from localStorage
-window.HABITS = [...defaultHABITS];
+window.HABITS = [];
 (function loadSavedHabits() {
   try {
     const saved = localStorage.getItem(HABITS_KEY);
