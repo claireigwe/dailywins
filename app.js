@@ -94,7 +94,14 @@ function storeToken(token) {
 }
 
 async function initAuth() {
-  if (convexInitialized) return isConnected();
+  if (convexInitialized && isConnected()) return true;
+  if (convexInitialized && !isConnected()) {
+    // Already tried and failed, try again
+    convexInitialized = false;
+    connectionFailed = false;
+    convexClient = null;
+    api = null;
+  }
   const success = await initConvex();
   convexInitialized = true;
   return success;
