@@ -124,22 +124,6 @@ async function checkAuth() {
     await initAuth();
   }
   
-  if (!isConnected()) {
-    console.warn('Convex not connected, using offline mode');
-    const token = getStoredToken();
-    if (token) {
-      // Keep user logged in even if Convex is temporarily unavailable
-      authState = AUTH_STATES.OFFLINE;
-      currentUser = { _id: 'offline', email: 'offline' };
-      notifyAuthChange();
-      return { state: authState, user: currentUser };
-    }
-    authState = AUTH_STATES.OFFLINE;
-    currentUser = null;
-    notifyAuthChange();
-    return { state: authState, user: null };
-  }
-  
   const token = getStoredToken();
   
   if (!token) {
@@ -147,6 +131,15 @@ async function checkAuth() {
     currentUser = null;
     notifyAuthChange();
     return { state: authState, user: null };
+  }
+  
+  if (!isConnected()) {
+    console.warn('Convex not connected, using offline mode');
+    currentUser = { _id: 'offline', email: 'offline' };
+    authState = AUTH_STATES.OFFLINE;
+    localStorage.setItem(LOGGED_IN_KEY, 'true');
+    notifyAuthChange();
+    return { state: authState, user: currentUser };
   }
   
   try {
@@ -157,8 +150,6 @@ async function checkAuth() {
       authState = user.onboardingComplete ? AUTH_STATES.LOGGED_IN : AUTH_STATES.ONBOARDING;
       localStorage.setItem(LOGGED_IN_KEY, 'true');
     } else {
-      // Token exists but verify returned null - this might be a temporary issue
-      // Keep the token and treat as offline mode so user stays logged in
       console.warn('Token verification returned null, keeping offline mode');
       currentUser = { _id: 'pending', email: 'pending' };
       authState = AUTH_STATES.OFFLINE;
@@ -166,7 +157,6 @@ async function checkAuth() {
     }
   } catch (error) {
     console.error("Auth check failed:", error);
-    // Keep user logged in for any error - they'll re-authenticate when Convex is back
     currentUser = { _id: 'pending', email: 'pending' };
     authState = AUTH_STATES.OFFLINE;
     localStorage.setItem(LOGGED_IN_KEY, 'true');
@@ -877,14 +867,17 @@ async function initApp() {
   console.log('Auth initialized');
   
   try {
-    // Add timeout to prevent hanging - but give it plenty of time
-    const timeoutPromise = new Promise((_, reject) => 
-      setTimeout(() => reject(new Error('Auth check timeout')), 30000)
+    // Quick timeout - don't wait for Convex on initial load
+    const timeoutPromise = new Promise(resolve => 
+      setTimeout(() => resolve({ state: 'timeout', user: null }), 5000)
     );
     
     const authPromise = checkAuth();
-    const { state, user } = await Promise.race([authPromise, timeoutPromise]);
+    const result = await Promise.race([authPromise, timeoutPromise]);
+    const { state, user } = result;
     console.log('Auth checked, state:', state, 'user:', user);
+    
+    hideLoading();
     
     // If we have a token and were logged in before, stay in app regardless of auth state
     const token = getStoredToken();
