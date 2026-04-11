@@ -1111,6 +1111,23 @@ async function loadUserDataFromConvex() {
     // Update HABITS in the main page scope
     window.userHabits = habits || [];
     window.WATER_GOAL = user.waterGoal || 8;
+    
+    // Also update the HABITS array in index.html if we have habits from Convex
+    if (habits && habits.length > 0 && typeof HABITS !== 'undefined') {
+      HABITS.length = 0;
+      habits.forEach(h => {
+        HABITS.push({
+          id: h._id,
+          name: h.name,
+          icon: h.icon,
+          pts: h.points || 20,
+          sub: h.description || ''
+        });
+      });
+      // Re-render habits with updated HABITS
+      if (typeof renderHabits === 'function') renderHabits();
+    }
+    console.log('HABITS array updated:', HABITS);
     console.log('WATER_GOAL set to:', window.WATER_GOAL);
     
     // Load habit logs for today to restore completion state
