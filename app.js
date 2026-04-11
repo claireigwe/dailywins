@@ -1174,90 +1174,93 @@ async function loadUserDataFromConvex() {
 // Real-time sync subscriptions
 let subscriptions = [];
 
+// Polling for real-time sync (since subscriptions not available in CDN bundle)
+let syncInterval = null;
+let lastSyncData = { tasks: null, habitLogs: null, water: null, stats: null };
+
+function startPolling() {
+  if (syncInterval) return; // Already polling
+  
+  console.log('Starting polling for data sync...');
+  syncInterval = setInterval(async () => {
+    const token = getStoredToken();
+    if (!token || !isConnected()) return;
+    
+    const today = new Date().toISOString().slice(0, 10);
+    
+    try {
+      // Check tasks
+      const tasks = await runQuery("tasks.listTasks", { token });
+      if (JSON.stringify(tasks) !== JSON.stringify(lastSyncData.tasks)) {
+        lastSyncData.tasks = tasks;
+        if (typeof state !== 'undefined' && tasks) {
+          state.tasks = tasks.map(t => ({...t, done: t.completed}));
+          saveState();
+          if (typeof renderTasks === 'function') renderTasks();
+          console.log('Tasks synced from server');
+        }
+      }
+      
+      // Check habit logs
+      const logs = await runQuery("habits.getHabitLogs", { token, date: today });
+      if (JSON.stringify(logs) !== JSON.stringify(lastSyncData.habitLogs)) {
+        lastSyncData.habitLogs = logs;
+        if (typeof todayData !== 'undefined' && logs) {
+          todayData.done = {};
+          logs.forEach(log => {
+            todayData.done[log.habitId] = true;
+          });
+          saveState();
+          if (typeof renderHabits === 'function') renderHabits();
+          console.log('Habit logs synced from server');
+        }
+      }
+      
+      // Check water
+      const water = await runQuery("water.getWaterLog", { token, date: today });
+      if (JSON.stringify(water) !== JSON.stringify(lastSyncData.water)) {
+        lastSyncData.water = water;
+        if (typeof todayData !== 'undefined' && water) {
+          todayData.water = water.glasses || 0;
+          saveState();
+          if (typeof renderWater === 'function') renderWater();
+          console.log('Water synced from server');
+        }
+      }
+      
+      // Check stats
+      const stats = await runQuery("users.getStats", { token });
+      if (JSON.stringify(stats) !== JSON.stringify(lastSyncData.stats)) {
+        lastSyncData.stats = stats;
+        if (typeof state !== 'undefined' && stats) {
+          if (!state.totalPoints || state.totalPoints === 0) {
+            state.totalPoints = stats.totalPoints || 0;
+          }
+          state.streak = stats.currentStreak || 0;
+          state.bestStreak = stats.bestStreak || 0;
+          state.totalDays = stats.totalDays || 0;
+          saveState();
+          if (typeof renderHeader === 'function') renderHeader();
+          console.log('Stats synced from server');
+        }
+      }
+    } catch (e) {
+      // Silently ignore polling errors
+    }
+  }, 5000); // Poll every 5 seconds
+}
+
+function stopPolling() {
+  if (syncInterval) {
+    clearInterval(syncInterval);
+    syncInterval = null;
+    console.log('Stopped polling');
+  }
+}
+
+// Alias for backward compatibility
 function setupConvexSubscriptions() {
-  if (!convexClient || !isConnected()) return;
-  
-  // Clean up existing subscriptions
-  subscriptions.forEach(sub => sub.unsubscribe());
-  subscriptions = [];
-  
-  const token = getStoredToken();
-  if (!token) return;
-  
-  const today = new Date().toISOString().slice(0, 10);
-  
-  // Subscribe to habits list
-  const habitsSub = convexClient.subscription(api.habits.getHabits, { token }, (habits) => {
-    console.log('Habits updated from server:', habits);
-    if (habits && habits.length > 0) {
-      const convexHabits = habits.map(h => ({
-        id: h._id,
-        name: h.name,
-        icon: h.icon,
-        pts: h.points || 20,
-        sub: h.description || ''
-      }));
-      if (typeof window.saveHABITS === 'function') {
-        window.saveHABITS(convexHabits);
-      }
-      if (typeof renderHabits === 'function') renderHabits();
-    }
-  });
-  subscriptions.push(habitsSub);
-  
-  // Subscribe to tasks
-  const tasksSub = convexClient.subscription(api.tasks.listTasks, { token }, (tasks) => {
-    console.log('Tasks updated from server:', tasks);
-    if (typeof state !== 'undefined' && tasks) {
-      state.tasks = tasks.map(t => ({...t, done: t.completed}));
-      saveState();
-      if (typeof renderTasks === 'function') renderTasks();
-    }
-  });
-  subscriptions.push(tasksSub);
-  
-  // Subscribe to habit logs for today
-  const habitLogsSub = convexClient.subscription(api.habits.getHabitLogs, { token, date: today }, (logs) => {
-    console.log('Habit logs updated from server:', logs);
-    if (typeof todayData !== 'undefined' && logs) {
-      todayData.done = {};
-      logs.forEach(log => {
-        todayData.done[log.habitId] = true;
-      });
-      saveState();
-      if (typeof renderHabits === 'function') renderHabits();
-    }
-  });
-  subscriptions.push(habitLogsSub);
-  
-  // Subscribe to water logs for today
-  const waterSub = convexClient.subscription(api.water.getWaterLog, { token, date: today }, (water) => {
-    console.log('Water updated from server:', water);
-    if (typeof todayData !== 'undefined' && water) {
-      todayData.water = water.glasses || 0;
-      saveState();
-      if (typeof renderWater === 'function') renderWater();
-    }
-  });
-  subscriptions.push(waterSub);
-  
-  // Subscribe to user stats (streak, points)
-  const statsSub = convexClient.subscription(api.users.getStats, { token }, (stats) => {
-    console.log('Stats updated from server:', stats);
-    if (typeof state !== 'undefined' && stats) {
-      if (!state.totalPoints || state.totalPoints === 0) {
-        state.totalPoints = stats.totalPoints || 0;
-      }
-      state.streak = stats.currentStreak || 0;
-      state.bestStreak = stats.bestStreak || 0;
-      state.totalDays = stats.totalDays || 0;
-      saveState();
-      if (typeof renderHeader === 'function') renderHeader();
-    }
-  });
-  subscriptions.push(statsSub);
-  
-  console.log('Convex subscriptions set up');
+  startPolling();
 }
 
 // Auth button handlers - fixed
