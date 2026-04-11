@@ -877,14 +877,27 @@ async function initApp() {
   console.log('Auth initialized');
   
   try {
-    // Add timeout to prevent hanging
+    // Add timeout to prevent hanging - but give it plenty of time
     const timeoutPromise = new Promise((_, reject) => 
-      setTimeout(() => reject(new Error('Auth check timeout')), 10000)
+      setTimeout(() => reject(new Error('Auth check timeout')), 30000)
     );
     
     const authPromise = checkAuth();
     const { state, user } = await Promise.race([authPromise, timeoutPromise]);
     console.log('Auth checked, state:', state, 'user:', user);
+    
+    // If we have a token and were logged in before, stay in app regardless of auth state
+    const token = getStoredToken();
+    const wasLoggedIn = localStorage.getItem(LOGGED_IN_KEY) === 'true';
+    if (token && wasLoggedIn) {
+      console.log('Has token and was logged in - staying in app');
+      const screen = document.getElementById('auth-screen');
+      if (screen) screen.style.display = 'none';
+      appInitialized = true;
+      // Try to sync data in background
+      loadUserDataFromConvex().catch(() => {});
+      return;
+    }
     
     hideLoading();
     
@@ -938,42 +951,50 @@ async function initApp() {
   } catch (error) {
     console.error('App initialization error:', error);
     hideLoading();
-    showAuth();
+    // If we have a token and were logged in before, stay in app
+    const token = getStoredToken();
+    const wasLoggedIn = localStorage.getItem(LOGGED_IN_KEY) === 'true';
+    if (token && wasLoggedIn) {
+      console.log('Error but has token - staying in app');
+      const screen = document.getElementById('auth-screen');
+      if (screen) screen.style.display = 'none';
+      appInitialized = true;
+    } else {
+      showAuth();
+    }
   }
 }
 
 // Listen for auth changes
+let authChangeInitialized = false;
 onAuthChange((state, user) => {
   console.log('Auth state changed:', state, 'user:', user);
   const authScreen = document.getElementById('auth-screen');
   const onboardingContainer = document.getElementById('onboarding-container');
   const token = getStoredToken();
+  const wasLoggedIn = localStorage.getItem(LOGGED_IN_KEY) === 'true';
+  
+  // If we have a token and were logged in, stay in the app regardless of state
+  if (token && wasLoggedIn) {
+    console.log('Has token and was logged in - staying in app');
+    authScreen.style.display = 'none';
+    if (onboardingContainer) onboardingContainer.style.display = 'none';
+    appInitialized = true;
+    return;
+  }
   
   if (state === AUTH_STATES.LOGGED_OUT) {
-    // Check if we have a token and were logged in before
-    const token = getStoredToken();
-    if (token && localStorage.getItem(LOGGED_IN_KEY) === 'true') {
-      // Stay in app
-      console.log('Logged out but has token - staying in app');
-      authScreen.style.display = 'none';
-      if (onboardingContainer) onboardingContainer.style.display = 'none';
-      appInitialized = true;
-      return;
-    }
     console.log('Showing auth screen');
     authScreen.style.display = 'flex';
     if (onboardingContainer) onboardingContainer.style.display = 'none';
     appInitialized = false;
   }
   
-  // OFFLINE with token means we keep user logged in (network issues)
-  if (state === AUTH_STATES.OFFLINE && token) {
-    console.log('Offline mode with token - showing app');
+  if (state === AUTH_STATES.OFFLINE) {
+    console.log('Offline mode - showing app');
     authScreen.style.display = 'none';
     if (onboardingContainer) onboardingContainer.style.display = 'none';
-    if (!appInitialized) {
-      appInitialized = true;
-    }
+    appInitialized = true;
   }
   
   if (state === AUTH_STATES.ONBOARDING) {
