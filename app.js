@@ -101,6 +101,10 @@ async function initAuth() {
 }
 
 async function runMutation(mutationPath, args) {
+  // Wait for Convex to be ready
+  if (!convexInitialized) {
+    await initAuth();
+  }
   if (!convexClient || !api) throw new Error('Convex not connected');
   const [module, func] = mutationPath.split(".");
   const mutation = api[module]?.[func];
@@ -112,6 +116,10 @@ async function runMutation(mutationPath, args) {
 window.runMutation = runMutation;
 
 async function runQuery(queryPath, args) {
+  // Wait for Convex to be ready
+  if (!convexInitialized) {
+    await initAuth();
+  }
   if (!convexClient || !api) throw new Error('Convex not connected');
   const [module, func] = queryPath.split(".");
   const query = api[module]?.[func];
