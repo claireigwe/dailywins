@@ -915,7 +915,7 @@
       <div class="setting-row">
         <div><div class="setting-label">Category</div><div class="setting-sub">Your habit template</div></div>
         <div class="custom-dropdown" id="templateDropdown">
-          <div class="dropdown-trigger" onclick="toggleDropdown('templateDropdown')">
+          <div class="dropdown-trigger" onclick="toggleDropdown('templateMenu')">
             <span class="dropdown-value" id="templateValue">💪 Health & Wellness</span>
             <span class="dropdown-arrow">▼</span>
           </div>
@@ -928,7 +928,7 @@
       <div class="setting-row">
         <div><div class="setting-label">Language</div><div class="setting-sub">Daily challenge language</div></div>
         <div class="custom-dropdown" id="langDropdown">
-          <div class="dropdown-trigger" onclick="toggleDropdown('langDropdown')">
+          <div class="dropdown-trigger" onclick="toggleDropdown('langMenu')">
             <span class="dropdown-value" id="langValue">🇪🇸 Spanish</span>
             <span class="dropdown-arrow">▼</span>
           </div>
@@ -940,7 +940,6 @@
             <div class="dropdown-option" data-value="yoruba" onclick="selectLang('yoruba')">🇳🇬 Yoruba</div>
           </div>
         </div>
-      </div>
       </div>
       <div class="setting-row">
         <div><div class="setting-label">Wake-up alarm</div><div class="setting-sub" id="alarmSub">Tap to enable a daily alarm</div></div>
@@ -1857,7 +1856,7 @@ function checkBadges(){
 //  SETTINGS
 // ════════════════════════════════════
 function toggleDropdown(id){
-  const menu=document.getElementById(id+'Menu');
+  const menu=document.getElementById(id);
   document.querySelectorAll('.dropdown-menu').forEach(m=>m.classList.remove('open'));
   menu.classList.toggle('open');
 }
