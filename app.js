@@ -901,7 +901,16 @@ async function initApp() {
         // We have a token and were logged in before - stay in app
         const screen = document.getElementById('auth-screen');
         if (screen) screen.style.display = 'none';
+        // Render the UI immediately
+        if (typeof renderHabits === 'function') renderHabits();
+        if (typeof renderWater === 'function') renderWater();
+        if (typeof renderHeader === 'function') renderHeader();
+        if (typeof renderLang === 'function') renderLang();
+        if (typeof renderTasks === 'function') renderTasks();
+        if (typeof renderAll === 'function') renderAll();
         appInitialized = true;
+        // Try to sync data in background
+        loadUserDataFromConvex().catch(() => {});
         return;
       }
       showAuth();
@@ -912,7 +921,16 @@ async function initApp() {
     if (state === AUTH_STATES.OFFLINE) {
       const screen = document.getElementById('auth-screen');
       if (screen) screen.style.display = 'none';
+      // Render the UI immediately
+      if (typeof renderHabits === 'function') renderHabits();
+      if (typeof renderWater === 'function') renderWater();
+      if (typeof renderHeader === 'function') renderHeader();
+      if (typeof renderLang === 'function') renderLang();
+      if (typeof renderTasks === 'function') renderTasks();
+      if (typeof renderAll === 'function') renderAll();
       appInitialized = true;
+      // Try to sync data in background
+      loadUserDataFromConvex().catch(() => {});
       return;
     }
     
@@ -988,17 +1006,21 @@ onAuthChange((state, user) => {
     authScreen.style.display = 'none';
     if (onboardingContainer) onboardingContainer.style.display = 'none';
     if (!appInitialized) {
+      // Always render the UI, regardless of data loading success
+      if (typeof renderHabits === 'function') renderHabits();
+      if (typeof renderWater === 'function') renderWater();
+      if (typeof renderHeader === 'function') renderHeader();
+      if (typeof renderLang === 'function') renderLang();
+      if (typeof renderTasks === 'function') renderTasks();
+      if (typeof renderAll === 'function') renderAll();
+      appInitialized = true;
+      
+      // Try to load data in background
       loadUserDataFromConvex().then(() => {
         if (typeof renderHabits === 'function') renderHabits();
         if (typeof renderWater === 'function') renderWater();
         if (typeof renderHeader === 'function') renderHeader();
-        if (typeof renderLang === 'function') renderLang();
-        if (typeof renderTasks === 'function') renderTasks();
-        if (typeof renderAll === 'function') renderAll();
-        appInitialized = true;
-      }).catch(() => {
-        appInitialized = true;
-      });
+      }).catch(() => {});
     }
   }
   
