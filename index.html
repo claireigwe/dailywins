@@ -91,7 +91,7 @@
   #content::-webkit-scrollbar{display:none;}
   #nav{flex-shrink:0;width:100%;position:fixed;bottom:0;left:0;background:var(--surface);box-shadow:0 -4px 30px rgba(123,127,232,0.1);display:flex;padding:10px 16px calc(10px + env(safe-area-inset-bottom,10px));border-radius:24px 24px 0 0;}
   @media (min-width: 520px) {
-    #nav{position:static;width:430px;margin:0 auto;border-radius:0;}
+    #nav{bottom:0;left:50%;transform:translateX(-50%);width:430px;border-radius:24px 24px 0 0;}
   }
   .header-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;}
   .logo{font-family:'Playfair Display',serif;font-size:24px;font-weight:600;color:var(--text);line-height:1;}
