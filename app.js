@@ -931,12 +931,23 @@ onAuthChange((state, user) => {
   console.log('Auth state changed:', state, 'user:', user);
   const authScreen = document.getElementById('auth-screen');
   const onboardingContainer = document.getElementById('onboarding-container');
+  const token = getStoredToken();
   
-  if (state === AUTH_STATES.LOGGED_OUT || state === AUTH_STATES.OFFLINE) {
+  if (state === AUTH_STATES.LOGGED_OUT) {
     console.log('Showing auth screen');
     authScreen.style.display = 'flex';
     if (onboardingContainer) onboardingContainer.style.display = 'none';
     appInitialized = false;
+  }
+  
+  // OFFLINE with token means we keep user logged in (network issues)
+  if (state === AUTH_STATES.OFFLINE && token) {
+    console.log('Offline mode with token - showing app');
+    authScreen.style.display = 'none';
+    if (onboardingContainer) onboardingContainer.style.display = 'none';
+    if (!appInitialized) {
+      appInitialized = true;
+    }
   }
   
   if (state === AUTH_STATES.ONBOARDING) {
