@@ -886,6 +886,13 @@ async function initApp() {
       console.log('Has token and was logged in - staying in app');
       const screen = document.getElementById('auth-screen');
       if (screen) screen.style.display = 'none';
+      // Render the UI immediately
+      if (typeof renderHabits === 'function') renderHabits();
+      if (typeof renderWater === 'function') renderWater();
+      if (typeof renderHeader === 'function') renderHeader();
+      if (typeof renderLang === 'function') renderLang();
+      if (typeof renderTasks === 'function') renderTasks();
+      if (typeof renderAll === 'function') renderAll();
       appInitialized = true;
       // Try to sync data in background
       loadUserDataFromConvex().catch(() => {});
@@ -969,6 +976,13 @@ async function initApp() {
       console.log('Error but has token - staying in app');
       const screen = document.getElementById('auth-screen');
       if (screen) screen.style.display = 'none';
+      // Render UI
+      if (typeof renderHabits === 'function') renderHabits();
+      if (typeof renderWater === 'function') renderWater();
+      if (typeof renderHeader === 'function') renderHeader();
+      if (typeof renderLang === 'function') renderLang();
+      if (typeof renderTasks === 'function') renderTasks();
+      if (typeof renderAll === 'function') renderAll();
       appInitialized = true;
     } else {
       showAuth();
@@ -990,6 +1004,13 @@ onAuthChange((state, user) => {
     console.log('Has token and was logged in - staying in app');
     authScreen.style.display = 'none';
     if (onboardingContainer) onboardingContainer.style.display = 'none';
+    // Render UI
+    if (typeof renderHabits === 'function') renderHabits();
+    if (typeof renderWater === 'function') renderWater();
+    if (typeof renderHeader === 'function') renderHeader();
+    if (typeof renderLang === 'function') renderLang();
+    if (typeof renderTasks === 'function') renderTasks();
+    if (typeof renderAll === 'function') renderAll();
     appInitialized = true;
     return;
   }
