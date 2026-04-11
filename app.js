@@ -972,6 +972,7 @@ async function loadUserDataFromConvex() {
       state.totalDays = user.totalDays || 0;
       state.settings = state.settings || {};
       state.settings.lang = user.language || 'spanish';
+      state.settings.template = user.template || 'health';
       if (state.settings.theme) {
         document.documentElement.setAttribute('data-theme', state.settings.theme);
       }

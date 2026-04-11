@@ -902,6 +902,13 @@
     <div class="screen" id="screen-settings">
       <h2 class="section-title">⚙️ <span>SETTINGS</span></h2>
       <div class="setting-row">
+        <div><div class="setting-label">Category</div><div class="setting-sub">Your habit template</div></div>
+        <select class="lang-select" id="templateSelect" onchange="changeTemplate(this.value)">
+          <option value="health">💪 Health & Wellness</option>
+          <option value="productivity">🎯 Productivity</option>
+        </select>
+      </div>
+      <div class="setting-row">
         <div><div class="setting-label">Language</div><div class="setting-sub">Daily challenge language</div></div>
         <select class="lang-select" id="langSelect" onchange="changeLang(this.value)">
           <option value="spanish">🇪🇸 Spanish</option>
@@ -1436,7 +1443,7 @@ function todayKey(){return new Date().toISOString().slice(0,10);}
 function loadState(){try{return JSON.parse(localStorage.getItem('dw_state')||'null');}catch{return null;}}
 function saveState(){localStorage.setItem('dw_state',JSON.stringify(state));}
 
-let state=loadState()||{streak:0,bestStreak:0,totalPoints:0,totalDays:0,langCorrect:0,perfectDays:0,langIndex:0,langAnswered:false,masteredLetters:[],curLetterIdx:0,tasks:[],settings:{lang:'spanish',wakeTime:'06:00',notif:false,sound:true},days:{},lastDate:null};
+let state=loadState()||{streak:0,bestStreak:0,totalPoints:0,totalDays:0,langCorrect:0,perfectDays:0,langIndex:0,langAnswered:false,masteredLetters:[],curLetterIdx:0,tasks:[],settings:{lang:'spanish',template:'health',wakeTime:'06:00',notif:false,sound:true},days:{},lastDate:null};
 if(!state.tasks)state.tasks=[];
 if(!state.vocabSRS)state.vocabSRS={};
 if(!state.vocabIdx)state.vocabIdx=0;
@@ -1809,6 +1816,7 @@ function checkBadges(){
 //  SETTINGS
 // ════════════════════════════════════
 function renderSettings(){
+  document.getElementById('templateSelect').value=state.settings.template||'health';
   document.getElementById('langSelect').value=state.settings.lang;
   renderAlarmStatus();
   document.getElementById('wakeTime').value=state.settings.wakeTime||'06:00';
@@ -1831,6 +1839,20 @@ function formatTime(t){
   return hr+':'+(m<10?'0'+m:m)+' '+ampm;
 }
 function changeLang(val){state.settings.lang=val;state.langIndex=0;state.langAnswered=false;saveState();renderLang();renderSettings();toast('Language changed! 🌍');}
+function changeTemplate(val){
+  state.settings.template=val;
+  const template=TEMPLATES[val];
+  if(template){
+    HABITS.length=0;
+    template.habits.forEach(h=>HABITS.push({...h,completed:false}));
+    delete todayData;
+    window.todayData={done:{}};
+    saveState();
+    renderHabits();
+    renderSettings();
+    toast('Category changed to '+template.name+'! 🎯');
+  }
+}
 function saveSettings(){state.settings.wakeTime=document.getElementById('wakeTime').value;saveState();}
 function saveAlarmTime(){
   state.settings.wakeTime=document.getElementById('wakeTime').value;
