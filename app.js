@@ -1013,8 +1013,6 @@ onAuthChange((state, user) => {
     console.log('Has token and was logged in - staying in app');
     authScreen.style.display = 'none';
     if (onboardingContainer) onboardingContainer.style.display = 'none';
-    // Set up subscriptions for real-time sync
-    setupConvexSubscriptions();
     // Render UI immediately
     if (typeof renderHabits === 'function') renderHabits();
     if (typeof renderWater === 'function') renderWater();
@@ -1023,11 +1021,17 @@ onAuthChange((state, user) => {
     if (typeof renderTasks === 'function') renderTasks();
     if (typeof renderAll === 'function') renderAll();
     appInitialized = true;
-    // Also try to load from Convex to update with correct data
+    // Load from Convex and re-render when done
     loadUserDataFromConvex().then(() => {
       if (typeof renderHabits === 'function') renderHabits();
       if (typeof renderWater === 'function') renderWater();
-    }).catch(() => {});
+      if (typeof renderHeader === 'function') renderHeader();
+      // Start background sync
+      startBackgroundSync();
+    }).catch(() => {
+      // Start background sync anyway
+      startBackgroundSync();
+    });
     return;
   }
   
@@ -1101,6 +1105,7 @@ async function loadUserDataFromConvex() {
     console.log('Fetching user data...');
     const user = await runQuery("users.getUserData", { token });
     console.log('User data:', user);
+    console.log('User name:', user?.name);
     if (!user) return;
     
     if (typeof state !== 'undefined') {
@@ -1115,10 +1120,12 @@ async function loadUserDataFromConvex() {
       state.settings.lang = user.language || 'spanish';
       state.settings.template = user.template || 'health';
       state.userName = user.name || '';
+      console.log('Setting userName to:', state.userName);
       if (state.settings.theme) {
         document.documentElement.setAttribute('data-theme', state.settings.theme);
       }
       saveState();
+      console.log('State saved, userName:', state.userName);
       console.log('State updated, totalPoints preserved from localStorage:', state.totalPoints);
     }
     
@@ -1172,45 +1179,30 @@ async function loadUserDataFromConvex() {
 // Real-time sync subscriptions
 let subscriptions = [];
 
-// Sync - just load from server once when needed
-function syncFromServer() {
-  const token = getStoredToken();
-  if (!token || !isConnected()) return;
-  
-  const today = new Date().toISOString().slice(0, 10);
-  
-  // Sync tasks
-  runQuery("tasks.listTasks", { token }).then(tasks => {
-    if (tasks && typeof state !== 'undefined') {
-      state.tasks = tasks.map(t => ({...t, done: t.completed}));
-      saveState();
-      if (typeof renderTasks === 'function') renderTasks();
+// Background sync - poll every 30 seconds
+let syncTimer = null;
+function startBackgroundSync() {
+  if (syncTimer) return;
+  console.log('Starting background sync...');
+  syncTimer = setInterval(() => {
+    if (typeof loadUserDataFromConvex === 'function') {
+      loadUserDataFromConvex().then(() => {
+        if (typeof renderHabits === 'function') renderHabits();
+        if (typeof renderWater === 'function') renderWater();
+        if (typeof renderHeader === 'function') renderHeader();
+      }).catch(() => {});
     }
-  }).catch(() => {});
-  
-  // Sync habit logs
-  runQuery("habits.getHabitLogs", { token, date: today }).then(logs => {
-    if (logs && typeof todayData !== 'undefined') {
-      todayData.done = {};
-      logs.forEach(log => { todayData.done[log.habitId] = true; });
-      saveState();
-      if (typeof renderHabits === 'function') renderHabits();
-    }
-  }).catch(() => {});
-  
-  // Sync water
-  runQuery("water.getWaterLog", { token, date: today }).then(water => {
-    if (water && typeof todayData !== 'undefined') {
-      todayData.water = water.glasses || 0;
-      saveState();
-      if (typeof renderWater === 'function') renderWater();
-    }
-  }).catch(() => {});
+  }, 30000); // Sync every 30 seconds
 }
-
-// Alias for backward compatibility
+function stopBackgroundSync() {
+  if (syncTimer) {
+    clearInterval(syncTimer);
+    syncTimer = null;
+  }
+}
+// Alias
 function setupConvexSubscriptions() {
-  // Don't auto-sync, just wait for user to refresh or do initial load
+  startBackgroundSync();
 }
 
 // Auth button handlers - fixed
