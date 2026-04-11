@@ -2035,7 +2035,6 @@ function openTaskModal(){
   document.getElementById('taskModal').style.display='flex';
   document.getElementById('taskModalInput').value='';
   document.getElementById('taskModalInput').focus();
-  document.querySelector('input[name="scheduleType"][value="today"]').checked=true;
 }
 
 function closeTaskModal(){
@@ -2045,9 +2044,8 @@ function closeTaskModal(){
 function submitTaskFromModal(){
   const text=document.getElementById('taskModalInput').value.trim();
   if(!text)return;
-  const scheduleType=document.querySelector('input[name="scheduleType"]:checked').value;
   if(!state.tasks)state.tasks=[];
-  state.tasks.unshift({text,done:false,id:Date.now(),recurring:false,scheduledDate:scheduleType});
+  state.tasks.unshift({text,done:false,id:Date.now()});
   saveState();
   renderTasks();
   closeTaskModal();
