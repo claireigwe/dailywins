@@ -987,7 +987,19 @@ onAuthChange((state, user) => {
     console.log('Offline mode - showing app');
     authScreen.style.display = 'none';
     if (onboardingContainer) onboardingContainer.style.display = 'none';
-    appInitialized = true;
+    if (!appInitialized) {
+      loadUserDataFromConvex().then(() => {
+        if (typeof renderHabits === 'function') renderHabits();
+        if (typeof renderWater === 'function') renderWater();
+        if (typeof renderHeader === 'function') renderHeader();
+        if (typeof renderLang === 'function') renderLang();
+        if (typeof renderTasks === 'function') renderTasks();
+        if (typeof renderAll === 'function') renderAll();
+        appInitialized = true;
+      }).catch(() => {
+        appInitialized = true;
+      });
+    }
   }
   
   if (state === AUTH_STATES.ONBOARDING) {
