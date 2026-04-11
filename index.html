@@ -1438,6 +1438,8 @@ const LANG_DATA={
 // Load habits from localStorage only - no defaults
 const HABITS_KEY = 'dailywins_habits';
 window.HABITS = [];
+// Also use HABITS as the main reference
+let HABITS = window.HABITS;
 (function loadSavedHabits() {
   try {
     const saved = localStorage.getItem(HABITS_KEY);
@@ -1445,6 +1447,7 @@ window.HABITS = [];
       const parsed = JSON.parse(saved);
       if (parsed && Array.isArray(parsed) && parsed.length > 0) {
         window.HABITS = parsed;
+        HABITS = window.HABITS; // Keep HABITS in sync
         console.log('Loaded saved habits from localStorage:', window.HABITS);
       }
     }
@@ -1455,11 +1458,10 @@ window.HABITS = [];
 // Make saveHabits globally accessible
 window.saveHABITS = function(h) {
   window.HABITS = h;
+  HABITS = window.HABITS; // Keep HABITS in sync
   localStorage.setItem(HABITS_KEY, JSON.stringify(h));
   console.log('Saved habits to localStorage:', h);
 };
-// Also expose HABITS for reading
-const HABITS = window.HABITS;
 
 const BADGES=[
   {id:'first',icon:'🌱',name:'First Step',req:'Complete day 1',fn:s=>s.totalDays>=1},
@@ -1583,14 +1585,13 @@ function renderHeader(){
 }
 
 function renderHabits(){
-  const habits = window.HABITS;
-  console.log('renderHabits called, window.HABITS:', window.HABITS, 'habits:', habits);
-  console.log('HABITS_KEY localStorage:', localStorage.getItem('dailywins_habits'));
-  if (!habits || habits.length === 0) {
-    console.log('No habits to render, using defaults');
-  }
+  const habits = HABITS;
+  console.log('=== renderHabits ===');
+  console.log('HABITS:', HABITS);
+  console.log('window.HABITS:', window.HABITS);
+  console.log('HABITS localStorage:', localStorage.getItem('dailywins_habits'));
   const list=document.getElementById('habitList');list.innerHTML='';
-  if (habits.length === 0) {
+  if (!habits || habits.length === 0) {
     list.innerHTML = '<div style="color:var(--text-dim);text-align:center;padding:20px;">No habits yet. Add some in settings!</div>';
     return;
   }
