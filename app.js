@@ -151,9 +151,15 @@ async function checkAuth() {
     }
   } catch (error) {
     console.error("Auth check failed:", error);
-    storeToken(null);
-    currentUser = null;
-    authState = AUTH_STATES.OFFLINE;
+    // Keep the token - only clear on explicit auth failures, not network errors
+    if (error.message && error.message.includes("Invalid token")) {
+      storeToken(null);
+      currentUser = null;
+      authState = AUTH_STATES.LOGGED_OUT;
+    } else {
+      // For network errors or other issues, try offline mode but keep token
+      authState = AUTH_STATES.OFFLINE;
+    }
   }
   
   notifyAuthChange();
@@ -872,8 +878,16 @@ async function initApp() {
     
     hideLoading();
     
-    if (state === AUTH_STATES.LOGGED_OUT || state === AUTH_STATES.OFFLINE) {
+    if (state === AUTH_STATES.LOGGED_OUT) {
       showAuth();
+      return;
+    }
+    
+    // If OFFLINE but has a token, still show the app (offline mode)
+    if (state === AUTH_STATES.OFFLINE) {
+      const screen = document.getElementById('auth-screen');
+      if (screen) screen.style.display = 'none';
+      appInitialized = true;
       return;
     }
     
