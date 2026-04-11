@@ -903,6 +903,8 @@ async function initApp() {
       if (screen) screen.style.display = 'none';
       // Load user data and render
       await loadUserDataFromConvex();
+      // Set up real-time sync
+      setupConvexSubscriptions();
       if (typeof renderHabits === 'function') renderHabits();
       if (typeof renderWater === 'function') renderWater();
       if (typeof renderHeader === 'function') renderHeader();
@@ -1020,6 +1022,65 @@ async function loadUserDataFromConvex() {
   } catch (error) {
     console.error('Failed to load user data:', error);
   }
+}
+
+// Real-time sync subscriptions
+let subscriptions = [];
+
+function setupConvexSubscriptions() {
+  if (!convexClient || !isConnected()) return;
+  
+  // Clean up existing subscriptions
+  subscriptions.forEach(sub => sub.unsubscribe());
+  subscriptions = [];
+  
+  const token = getStoredToken();
+  if (!token) return;
+  
+  const today = new Date().toISOString().slice(0, 10);
+  
+  // Subscribe to tasks
+  const tasksSub = convexClient.subscription(api.tasks.listTasks, { token }, (tasks) => {
+    console.log('Tasks updated from server:', tasks);
+    if (typeof state !== 'undefined' && tasks) {
+      state.tasks = tasks.map(t => ({...t, done: t.completed}));
+      saveState();
+      if (typeof renderTasks === 'function') renderTasks();
+    }
+  });
+  subscriptions.push(tasksSub);
+  
+  // Subscribe to habit logs for today
+  const habitLogsSub = convexClient.subscription(api.habits.getHabitLogs, { token, date: today }, (logs) => {
+    console.log('Habit logs updated from server:', logs);
+    if (typeof todayData !== 'undefined' && logs) {
+      todayData.done = {};
+      logs.forEach(log => {
+        todayData.done[log.habitId] = true;
+      });
+      saveState();
+      if (typeof renderHabits === 'function') renderHabits();
+    }
+  });
+  subscriptions.push(habitLogsSub);
+  
+  // Subscribe to user stats (streak, points)
+  const statsSub = convexClient.subscription(api.users.getStats, { token }, (stats) => {
+    console.log('Stats updated from server:', stats);
+    if (typeof state !== 'undefined' && stats) {
+      if (!state.totalPoints || state.totalPoints === 0) {
+        state.totalPoints = stats.totalPoints || 0;
+      }
+      state.streak = stats.currentStreak || 0;
+      state.bestStreak = stats.bestStreak || 0;
+      state.totalDays = stats.totalDays || 0;
+      saveState();
+      if (typeof renderHeader === 'function') renderHeader();
+    }
+  });
+  subscriptions.push(statsSub);
+  
+  console.log('Convex subscriptions set up');
 }
 
 // Auth button handlers - fixed
