@@ -1582,7 +1582,8 @@ function renderHeader(){
 
 function renderHabits(){
   const habits = window.HABITS || defaultHABITS;
-  console.log('renderHabits called, habits:', habits);
+  console.log('renderHabits called, window.HABITS:', window.HABITS, 'habits:', habits);
+  console.log('HABITS_KEY localStorage:', localStorage.getItem('dailywins_habits'));
   const list=document.getElementById('habitList');list.innerHTML='';
   if (habits.length === 0) {
     list.innerHTML = '<div style="color:var(--text-dim);text-align:center;padding:20px;">No habits yet. Add some in settings!</div>';

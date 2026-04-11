@@ -777,6 +777,17 @@ function setupOnboardingHandlers(container) {
         
         await completeOnboarding(customHabits, waterGoal, selectedLanguage);
         
+        // Save habits to localStorage before reload so they're available immediately
+        const habitsToSave = customHabits.map((h, i) => ({
+          id: `habit-${i}`,
+          name: h.name,
+          icon: h.icon,
+          pts: h.points || 20,
+          sub: h.description || ''
+        }));
+        localStorage.setItem('dailywins_habits', JSON.stringify(habitsToSave));
+        console.log('Saved habits to localStorage before reload:', habitsToSave);
+        
         // Reload to initialize app
         window.location.reload();
       } catch (error) {
