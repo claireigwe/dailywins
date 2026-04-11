@@ -89,7 +89,7 @@
     #content{width:430px;margin:0 auto;padding-top:140px;padding-bottom:80px;}
   }
   #content::-webkit-scrollbar{display:none;}
-  #nav{flex-shrink:0;width:100%;position:fixed;bottom:0;left:0;background:var(--surface);box-shadow:0 -4px 30px rgba(123,127,232,0.1);display:flex;padding:10px 16px calc(10px + env(safe-area-inset-bottom,10px));border-radius:24px 24px 0 0;}
+  #nav{flex-shrink:0;width:100%;position:fixed;bottom:0;left:0;z-index:1000;background:var(--surface);box-shadow:0 -4px 30px rgba(123,127,232,0.1);display:flex;padding:10px 16px calc(10px + env(safe-area-inset-bottom,10px));border-radius:24px 24px 0 0;}
   @media (min-width: 520px) {
     #nav{bottom:0;left:50%;transform:translateX(-50%);width:430px;border-radius:24px 24px 0 0;}
   }
@@ -582,7 +582,7 @@
 
   /* ── TASK MODAL ── */
   .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:5000;display:flex;align-items:center;justify-content:center;padding:20px;}
-  .modal-content{background:var(--surface);border-radius:var(--radius-lg);width:100%;max-width:360px;overflow:hidden;box-shadow:var(--shadow);}
+  .modal-content{background:var(--surface);border-radius:var(--radius-lg);width:100%;max-width:360px;overflow:visible;box-shadow:var(--shadow);}
   .modal-header{display:flex;justify-content:space-between;align-items:center;padding:18px 20px;border-bottom:1px solid var(--border);}
   .modal-header h3{font-family:'Playfair Display',serif;font-size:18px;font-weight:600;margin:0;}
   .modal-close{background:none;border:none;color:var(--text-dim);font-size:20px;cursor:pointer;padding:4px;}
