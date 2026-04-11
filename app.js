@@ -1015,7 +1015,7 @@ onAuthChange((state, user) => {
     console.log('Has token and was logged in - staying in app');
     authScreen.style.display = 'none';
     if (onboardingContainer) onboardingContainer.style.display = 'none';
-    // Render UI
+    // Render UI immediately
     if (typeof renderHabits === 'function') renderHabits();
     if (typeof renderWater === 'function') renderWater();
     if (typeof renderHeader === 'function') renderHeader();
@@ -1023,6 +1023,11 @@ onAuthChange((state, user) => {
     if (typeof renderTasks === 'function') renderTasks();
     if (typeof renderAll === 'function') renderAll();
     appInitialized = true;
+    // Also try to load from Convex to update with correct data
+    loadUserDataFromConvex().then(() => {
+      if (typeof renderHabits === 'function') renderHabits();
+      if (typeof renderWater === 'function') renderWater();
+    }).catch(() => {});
     return;
   }
   

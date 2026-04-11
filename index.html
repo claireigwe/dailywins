@@ -1443,20 +1443,27 @@ const defaultHABITS = [
   {id:'eat',name:'Ate Healthy',icon:'🥗',pts:25,sub:'Choose whole foods today'},
   {id:'lang',name:'Language Practice',icon:'🌍',pts:15,sub:'Complete the daily challenge below'},
 ];
-window.HABITS = defaultHABITS;
-try {
-  const saved = localStorage.getItem(HABITS_KEY);
-  if (saved) {
-    const parsed = JSON.parse(saved);
-    if (parsed && Array.isArray(parsed) && parsed.length > 0) {
-      window.HABITS = parsed;
+// Start with defaults, then immediately load from localStorage
+window.HABITS = [...defaultHABITS];
+(function loadSavedHabits() {
+  try {
+    const saved = localStorage.getItem(HABITS_KEY);
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      if (parsed && Array.isArray(parsed) && parsed.length > 0) {
+        window.HABITS = parsed;
+        console.log('Loaded saved habits from localStorage:', window.HABITS);
+      }
     }
+  } catch(e) {
+    console.error('Error loading saved habits:', e);
   }
-} catch(e) {}
+})();
 // Make saveHabits globally accessible
 window.saveHABITS = function(h) {
   window.HABITS = h;
   localStorage.setItem(HABITS_KEY, JSON.stringify(h));
+  console.log('Saved habits to localStorage:', h);
 };
 // Also expose HABITS for reading
 const HABITS = window.HABITS;
@@ -1581,9 +1588,12 @@ function renderHeader(){
 }
 
 function renderHabits(){
-  const habits = window.HABITS || defaultHABITS;
+  const habits = window.HABITS;
   console.log('renderHabits called, window.HABITS:', window.HABITS, 'habits:', habits);
   console.log('HABITS_KEY localStorage:', localStorage.getItem('dailywins_habits'));
+  if (!habits || habits.length === 0) {
+    console.log('No habits to render, using defaults');
+  }
   const list=document.getElementById('habitList');list.innerHTML='';
   if (habits.length === 0) {
     list.innerHTML = '<div style="color:var(--text-dim);text-align:center;padding:20px;">No habits yet. Add some in settings!</div>';
