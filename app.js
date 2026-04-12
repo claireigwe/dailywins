@@ -1112,7 +1112,8 @@ function startBackgroundSync() {
   syncTimer = setInterval(async () => {
     syncCount++;
     const token = getStoredToken();
-    console.log(`[Sync #${syncCount}] Running at ${new Date().toISOString()}`);
+    console.log(`[Sync #${syncCount}] Running`);
+    console.log(`[Sync] Token exists:`, !!token, 'Connected:', isConnected());
     
     if (!token) {
       console.log('[Sync] No token found, skipping');
