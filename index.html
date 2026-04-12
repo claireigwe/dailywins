@@ -2030,9 +2030,15 @@ function addWater(){
   
   // Sync to Convex
   const token = localStorage.getItem('dailywins_token');
+  console.log('[Water] addWater called, token:', !!token, 'window.runMutation:', typeof window.runMutation);
   if (token && window.runMutation) {
     const today = new Date().toISOString().slice(0,10);
-    window.runMutation("water.addWater", { token, date: today }).catch(e => console.error('Failed to sync water add:', e));
+    console.log('[Water] Calling addWater mutation with date:', today);
+    window.runMutation("water.addWater", { token, date: today })
+      .then(r => console.log('[Water] Mutation success:', r))
+      .catch(e => console.error('[Water] Mutation error:', e));
+  } else {
+    console.log('[Water] NOT syncing - token:', !!token, 'runMutation:', typeof window.runMutation);
   }
 }
 function removeWater(){
