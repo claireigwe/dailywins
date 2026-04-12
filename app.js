@@ -1128,40 +1128,59 @@ function startBackgroundSync() {
     console.log('[Sync] Today:', today);
     
     try {
-      // Sync tasks
+      // Sync tasks - MERGE instead of replace
       console.log('[Sync] Fetching tasks from Convex...');
-      const tasks = await runQuery("tasks.listTasks", { token, date: today });
-      console.log('[Sync] Tasks from Convex:', tasks?.length || 0, 'tasks');
-      if (tasks && tasks.length > 0) {
-        console.log('[Sync] Sample task:', tasks[0]);
-        if (window.state) {
-          window.state.tasks = tasks.map(t => ({...t, done: t.done}));
-          saveState();
-          console.log('[Sync] window.state.tasks updated, count:', window.state.tasks.length);
-        }
+      const convexTasks = await runQuery("tasks.listTasks", { token, date: today });
+      console.log('[Sync] Tasks from Convex:', convexTasks?.length || 0, 'tasks');
+      
+      if (window.state && convexTasks) {
+        // Create a map of Convex tasks by _id for quick lookup
+        const convexTaskMap = new Map();
+        convexTasks.forEach(t => convexTaskMap.set(t._id, t));
+        
+        // Update existing local tasks that have Convex IDs with latest status
+        const updatedTasks = window.state.tasks.map(localTask => {
+          if (localTask._id && convexTaskMap.has(localTask._id)) {
+            // Task exists in Convex - update with latest status
+            const convexTask = convexTaskMap.get(localTask._id);
+            return { ...localTask, done: convexTask.done, text: convexTask.text };
+          }
+          return localTask; // Keep local-only task as-is
+        });
+        
+        // Add new tasks from Convex that aren't in local state
+        const localIds = new Set(window.state.tasks.map(t => t._id || t.id));
+        convexTasks.forEach(ct => {
+          if (!localIds.has(ct._id)) {
+            updatedTasks.push({ _id: ct._id, text: ct.text, done: ct.done, id: Date.now() });
+          }
+        });
+        
+        window.state.tasks = updatedTasks;
+        saveState();
+        console.log('[Sync] window.state.tasks merged, count:', window.state.tasks.length);
+        
         if (typeof renderTasks === 'function') {
           renderTasks();
           console.log('[Sync] renderTasks called');
         }
-      } else {
-        console.log('[Sync] No tasks from Convex');
       }
       
       // Sync habit logs
       const logs = await runQuery("habits.getHabitLogs", { token, date: today });
       console.log('[Sync] Habit logs:', logs?.length || 0);
       if (logs && window.todayData) {
-        window.todayData.done = {};
+        // Merge: keep local completions, add Convex completions
         logs.forEach(log => { window.todayData.done[log.habitId] = true; });
         saveState();
         if (typeof renderHabits === 'function') renderHabits();
       }
       
-      // Sync water
+      // Sync water - use max of local and Convex
       const water = await runQuery("water.getWaterLog", { token, date: today });
-      console.log('[Sync] Water:', water);
+      console.log('[Sync] Water from Convex:', water);
       if (water && window.todayData) {
-        window.todayData.water = water.glasses || 0;
+        window.todayData.water = Math.max(window.todayData.water || 0, water.glasses || 0);
         saveState();
         if (typeof renderWater === 'function') renderWater();
       }
