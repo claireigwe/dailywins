@@ -34,6 +34,7 @@ async function initConvex() {
     convexClient = new window.convex.ConvexClient(CONVEX_URL);
     api = window.convex.anyApi;
     console.log('Convex connected successfully');
+    console.log('[Convex] API modules:', Object.keys(api || {}));
     return true;
   } catch (err) {
     console.error('Convex initialization failed:', err);
@@ -114,8 +115,15 @@ async function runMutation(mutationPath, args) {
   }
   if (!convexClient || !api) throw new Error('Convex not connected');
   const [module, func] = mutationPath.split(".");
+  console.log('[runMutation] module:', module, 'func:', func);
+  console.log('[runMutation] api keys:', Object.keys(api || {}));
   const mutation = api[module]?.[func];
-  if (!mutation) throw new Error(`Mutation ${mutationPath} not found`);
+  if (!mutation) {
+    console.error('[runMutation] Mutation not found:', mutationPath);
+    console.error('[runMutation] api[module]:', api[module]);
+    throw new Error(`Mutation ${mutationPath} not found`);
+  }
+  console.log('[runMutation] Found mutation:', mutation);
   return convexClient.mutation(mutation, args || {});
 }
 
@@ -130,7 +138,11 @@ async function runQuery(queryPath, args) {
   if (!convexClient || !api) throw new Error('Convex not connected');
   const [module, func] = queryPath.split(".");
   const query = api[module]?.[func];
-  if (!query) throw new Error(`Query ${queryPath} not found`);
+  if (!query) {
+    console.error('[runQuery] Query not found:', queryPath);
+    console.error('[runQuery] api[module]:', api[module]);
+    throw new Error(`Query ${queryPath} not found`);
+  }
   return convexClient.query(query, args || {});
 }
 
@@ -920,7 +932,9 @@ async function initApp() {
       if (typeof renderTasks === 'function') renderTasks();
       if (typeof renderAll === 'function') renderAll();
       appInitialized = true;
-      // Try to sync data in background
+      // Start background sync
+      startBackgroundSync();
+      // Try to load full data from Convex
       loadUserDataFromConvex().catch(() => {});
       return;
     }
@@ -1018,25 +1032,25 @@ async function loadUserDataFromConvex() {
     console.log('User name:', user?.name);
     if (!user) return;
     
-    if (typeof state !== 'undefined') {
+    if (window.state) {
       // Only use Convex values if localStorage is empty/default
-      if (!state.totalPoints || state.totalPoints === 0) {
-        state.totalPoints = user.totalPoints || 0;
+      if (!window.state.totalPoints || window.state.totalPoints === 0) {
+        window.state.totalPoints = user.totalPoints || 0;
       }
-      state.streak = user.currentStreak || 0;
-      state.bestStreak = user.bestStreak || 0;
-      state.totalDays = user.totalDays || 0;
-      state.settings = state.settings || {};
-      state.settings.lang = user.language || 'spanish';
-      state.settings.template = user.template || 'health';
-      state.userName = user.name || '';
-      console.log('Setting userName to:', state.userName);
-      if (state.settings.theme) {
-        document.documentElement.setAttribute('data-theme', state.settings.theme);
+      window.state.streak = user.currentStreak || 0;
+      window.state.bestStreak = user.bestStreak || 0;
+      window.state.totalDays = user.totalDays || 0;
+      window.state.settings = window.state.settings || {};
+      window.state.settings.lang = user.language || 'spanish';
+      window.state.settings.template = user.template || 'health';
+      window.state.userName = user.name || '';
+      console.log('Setting userName to:', window.state.userName);
+      if (window.state.settings.theme) {
+        document.documentElement.setAttribute('data-theme', window.state.settings.theme);
       }
       saveState();
-      console.log('State saved, userName:', state.userName);
-      console.log('State updated, totalPoints preserved from localStorage:', state.totalPoints);
+      console.log('State saved, userName:', window.state.userName);
+      console.log('State updated, totalPoints preserved from localStorage:', window.state.totalPoints);
     }
     
     console.log('Fetching habits...');
@@ -1073,9 +1087,9 @@ async function loadUserDataFromConvex() {
     console.log('Habit logs:', habitLogs);
     
     // Update todayData.done with completion status
-    if (typeof todayData !== 'undefined' && habitLogs) {
+    if (window.todayData && habitLogs) {
       habitLogs.forEach(log => {
-        todayData.done[log.habitId] = true;
+        window.todayData.done[log.habitId] = true;
       });
       saveState();
     }
@@ -1089,20 +1103,87 @@ async function loadUserDataFromConvex() {
 // Real-time sync subscriptions
 let subscriptions = [];
 
-// Background sync - poll every 30 seconds
+// Background sync - poll every 10 seconds
 let syncTimer = null;
+let syncCount = 0;
 function startBackgroundSync() {
   if (syncTimer) return;
   console.log('Starting background sync...');
-  syncTimer = setInterval(() => {
-    if (typeof loadUserDataFromConvex === 'function') {
-      loadUserDataFromConvex().then(() => {
-        if (typeof renderHabits === 'function') renderHabits();
-        if (typeof renderWater === 'function') renderWater();
-        if (typeof renderHeader === 'function') renderHeader();
-      }).catch(() => {});
+  syncTimer = setInterval(async () => {
+    syncCount++;
+    const token = getStoredToken();
+    console.log(`[Sync #${syncCount}] Running at ${new Date().toISOString()}`);
+    
+    if (!token) {
+      console.log('[Sync] No token found, skipping');
+      return;
     }
-  }, 30000); // Sync every 30 seconds
+    
+    if (!isConnected()) {
+      console.log('[Sync] Convex not connected, skipping');
+      return;
+    }
+    
+    const today = new Date().toISOString().slice(0, 10);
+    console.log('[Sync] Today:', today);
+    
+    try {
+      // Sync tasks
+      console.log('[Sync] Fetching tasks from Convex...');
+      const tasks = await runQuery("tasks.listTasks", { token, date: today });
+      console.log('[Sync] Tasks from Convex:', tasks?.length || 0, 'tasks');
+      if (tasks && tasks.length > 0) {
+        console.log('[Sync] Sample task:', tasks[0]);
+        if (window.state) {
+          window.state.tasks = tasks.map(t => ({...t, done: t.done}));
+          saveState();
+          console.log('[Sync] window.state.tasks updated, count:', window.state.tasks.length);
+        }
+        if (typeof renderTasks === 'function') {
+          renderTasks();
+          console.log('[Sync] renderTasks called');
+        }
+      } else {
+        console.log('[Sync] No tasks from Convex');
+      }
+      
+      // Sync habit logs
+      const logs = await runQuery("habits.getHabitLogs", { token, date: today });
+      console.log('[Sync] Habit logs:', logs?.length || 0);
+      if (logs && window.todayData) {
+        window.todayData.done = {};
+        logs.forEach(log => { window.todayData.done[log.habitId] = true; });
+        saveState();
+        if (typeof renderHabits === 'function') renderHabits();
+      }
+      
+      // Sync water
+      const water = await runQuery("water.getWaterLog", { token, date: today });
+      console.log('[Sync] Water:', water);
+      if (water && window.todayData) {
+        window.todayData.water = water.glasses || 0;
+        saveState();
+        if (typeof renderWater === 'function') renderWater();
+      }
+      
+      // Sync stats
+      const userData = await runQuery("users.getUserData", { token });
+      if (userData && window.state) {
+        window.state.streak = userData.currentStreak || 0;
+        window.state.bestStreak = userData.bestStreak || 0;
+        window.state.totalDays = userData.totalDays || 0;
+        if (!window.state.totalPoints || window.state.totalPoints === 0) {
+          window.state.totalPoints = userData.totalPoints || 0;
+        }
+        saveState();
+        if (typeof renderHeader === 'function') renderHeader();
+      }
+      
+      console.log(`[Sync #${syncCount}] Complete`);
+    } catch (e) {
+      console.error('[Sync] Error:', e.message, e.stack);
+    }
+  }, 10000); // Sync every 10 seconds
 }
 function stopBackgroundSync() {
   if (syncTimer) {

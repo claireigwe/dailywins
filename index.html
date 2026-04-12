@@ -1485,9 +1485,10 @@ const NUDGES=[
 // ════════════════════════════════════
 function todayKey(){return new Date().toISOString().slice(0,10);}
 function loadState(){try{return JSON.parse(localStorage.getItem('dw_state')||'null');}catch{return null;}}
-function saveState(){localStorage.setItem('dw_state',JSON.stringify(state));}
+function saveState(){localStorage.setItem('dw_state',JSON.stringify(window.state));}
 
 let state=loadState()||{streak:0,bestStreak:0,totalPoints:0,totalDays:0,langCorrect:0,perfectDays:0,langIndex:0,langAnswered:false,masteredLetters:[],curLetterIdx:0,tasks:[],userName:'',settings:{lang:'spanish',template:'health',wakeTime:'06:00',notif:false,sound:true},days:{},lastDate:null};
+window.state = state; // Expose state globally for app.js access
 if(!state.tasks)state.tasks=[];
 if(!state.vocabSRS)state.vocabSRS={};
 if(!state.vocabIdx)state.vocabIdx=0;
@@ -2026,10 +2027,24 @@ function addWater(){
   console.log('calling renderWater');
   renderWater();
   console.log('water count element:', document.getElementById('waterCount').textContent);
+  
+  // Sync to Convex
+  const token = localStorage.getItem('dailywins_token');
+  if (token && window.runMutation) {
+    const today = new Date().toISOString().slice(0,10);
+    window.runMutation("water.addWater", { token, date: today }).catch(e => console.error('Failed to sync water add:', e));
+  }
 }
 function removeWater(){
   if(!todayData.water||todayData.water<=0)return;
   todayData.water--;saveState();renderWater();
+  
+  // Sync to Convex
+  const token = localStorage.getItem('dailywins_token');
+  if (token && window.runMutation) {
+    const today = new Date().toISOString().slice(0,10);
+    window.runMutation("water.removeWater", { token, date: today }).catch(e => console.error('Failed to sync water remove:', e));
+  }
 }
 
 // ════════════════════════════════════
@@ -2125,15 +2140,47 @@ function closeTaskModal(){
   document.getElementById('taskModal').style.display='none';
 }
 
-function submitTaskFromModal(){
+async function submitTaskFromModal(){
   const text=document.getElementById('taskModalInput').value.trim();
   if(!text)return;
   if(!state.tasks)state.tasks=[];
-  state.tasks.unshift({text,done:false,id:Date.now()});
+  
+  const localTask = {text, done:false, id:Date.now()};
+  state.tasks.unshift(localTask);
   saveState();
   renderTasks();
   closeTaskModal();
   toast('Task added!','',1500);
+  
+  // Sync to Convex
+  const token = localStorage.getItem('dailywins_token');
+  console.log('[Task] Creating task');
+  console.log('[Task] Token:', token ? token.substring(0, 20) + '...' : 'MISSING');
+  console.log('[Task] runMutation:', typeof window.runMutation);
+  
+  if (token && window.runMutation) {
+    try {
+      console.log('[Task] Calling mutation with args:', { token: token.substring(0, 20) + '...', text, scheduleType: "today" });
+      const mutationPath = "tasks.createTask";
+      console.log('[Task] Mutation path:', mutationPath);
+      const result = await window.runMutation(mutationPath, { token, text, scheduleType: "today" });
+      console.log('[Task] Mutation result:', result);
+      
+      // Handle different return formats from Convex
+      let taskId = result;
+      if (result && typeof result === 'object') {
+        taskId = result.taskId || result._id || result.id;
+      }
+      
+      console.log('[Task] Extracted taskId:', taskId);
+      localTask._id = taskId;
+      saveState();
+    } catch (e) {
+      console.error('[Task] Mutation error:', e.message, e.stack);
+    }
+  } else {
+    console.log('[Task] NOT syncing - missing token or runMutation');
+  }
 }
 
 function toggleTask(i){
@@ -2143,8 +2190,12 @@ function toggleTask(i){
     return;
   }
   const t=state.tasks[i];
-  console.log('Task:', t);
-  if(!t.done){
+  console.log('[Task] Toggling task:', t);
+  const wasDone = t.done;
+  const token = localStorage.getItem('dailywins_token');
+  console.log('[Task] Token exists:', !!token, 'Has _id:', !!t._id);
+  
+  if(!wasDone){
     t.done=true;
     state.totalPoints+=10;
     beep('ok');
@@ -2153,12 +2204,34 @@ function toggleTask(i){
     renderTasks();
     renderHeader();
     checkBadges();
+    // Sync to Convex
+    if (t._id && window.runMutation) {
+      if (token) {
+        console.log('[Task] Syncing COMPLETE to Convex, taskId:', t._id);
+        window.runMutation("tasks.toggleTask", { token, taskId: t._id })
+          .then(r => console.log('[Task] Toggle complete response:', r))
+          .catch(e => console.error('[Task] Failed to sync task complete:', e));
+      }
+    } else {
+      console.log('[Task] NOT syncing complete - missing _id or runMutation');
+    }
   } else {
     t.done=false;
     state.totalPoints=Math.max(0,state.totalPoints-10);
     saveState();
     renderTasks();
     renderHeader();
+    // Sync to Convex
+    if (t._id && window.runMutation) {
+      if (token) {
+        console.log('[Task] Syncing UNCOMPLETE to Convex, taskId:', t._id);
+        window.runMutation("tasks.toggleTask", { token, taskId: t._id })
+          .then(r => console.log('[Task] Toggle uncomplete response:', r))
+          .catch(e => console.error('[Task] Failed to sync task uncomplete:', e));
+      }
+    } else {
+      console.log('[Task] NOT syncing uncomplete - missing _id or runMutation');
+    }
   }
 }
 
@@ -2171,6 +2244,14 @@ function deleteTask(i){
   state.tasks.splice(i,1);
   saveState();renderTasks();renderHeader();
   toast('Task deleted','',1500);
+  
+  // Sync to Convex
+  if (t && t._id && window.runMutation) {
+    const token = localStorage.getItem('dailywins_token');
+    if (token) {
+      window.runMutation("tasks.deleteTask", { token, taskId: t._id }).catch(e => console.error('Failed to sync task delete:', e));
+    }
+  }
 }
 
 
@@ -2298,7 +2379,16 @@ function renderAlarmStatus(){
 // ════════════════════════════════════
 //  HABIT CHECK — BETTER ANIMATION
 // ════════════════════════════════════
+function isConvexId(id) {
+  // Convex IDs are typically 24 characters: lowercase letter followed by 23 alphanumeric chars
+  return typeof id === 'string' && /^[a-z][a-z0-9]{23}$/.test(id);
+}
+
 function toggleHabitAnimated(id, pts, el){
+  console.log('[Habit] toggleHabitAnimated called, id:', id, 'pts:', pts);
+  console.log('[Habit] ID type:', typeof id, 'ID length:', id?.length);
+  console.log('[Habit] window.userHabits:', window.userHabits);
+  
   const wasDone = todayData.done[id];
   
   if(wasDone){
@@ -2306,18 +2396,7 @@ function toggleHabitAnimated(id, pts, el){
     state.totalPoints=Math.max(0,state.totalPoints-pts);
     toast('Habit unchecked');
     saveState();renderHabits();renderHeader();
-    // Sync to Convex
-    const token = localStorage.getItem('dailywins_token');
-    if (token && window.runMutation) {
-      const today = new Date().toISOString().slice(0,10);
-      window.runMutation("habits.logHabitCompletion", { 
-        token, 
-        habitId: id, 
-        date: today, 
-        completed: false,
-        points: pts
-      }).catch(e => console.error('Failed to sync habit uncheck:', e));
-    }
+    // Habit sync disabled
     return;
   }
   
@@ -2341,18 +2420,9 @@ function toggleHabitAnimated(id, pts, el){
   }
   saveState();renderHabits();renderHeader();checkBadges();
   
-  // Sync to Convex
-  const token = localStorage.getItem('dailywins_token');
-  if (token && window.runMutation) {
-    const today = new Date().toISOString().slice(0,10);
-    window.runMutation("habits.logHabitCompletion", { 
-      token, 
-      habitId: id, 
-      date: today, 
-      completed: true,
-      points: pts
-    }).catch(e => console.error('Failed to sync habit:', e));
-  }
+  // Habit sync disabled - needs fix
+  // TODO: Fix habit sync to use correct Convex IDs
+  console.log('[Habit] Sync disabled - habitId:', id);
 }
 
 // ════════════════════════════════════
