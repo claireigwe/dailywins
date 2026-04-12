@@ -44,16 +44,28 @@ export const getHabitLogs = query({
 export const logHabitCompletion = mutation({
   args: { token: v.string(), habitId: v.id("habits"), date: v.string(), completed: v.boolean(), points: v.optional(v.number()) },
   handler: async (ctx, args) => {
+    console.log("logHabitCompletion called", JSON.stringify(args));
+    
     const credentials = await ctx.db.query("credentials").collect();
     const credential = credentials.find(
       (c: any) => c.sessionToken === args.token
     );
     
+    console.log("Credential found:", !!credential);
     if (!credential) throw new Error("Invalid session");
     if (credential.sessionExpiry < Date.now()) throw new Error("Session expired");
     
     const user = await ctx.db.get(credential.userId);
+    console.log("User found:", !!user, "userId:", credential.userId);
     if (!user) throw new Error("User not found");
+    
+    // Check if habit exists and belongs to user
+    const habit = await ctx.db.get(args.habitId);
+    console.log("Habit found:", !!habit, "habitId:", args.habitId);
+    if (!habit) throw new Error("Habit not found");
+    if (habit.userId.toString() !== credential.userId.toString()) {
+      throw new Error("Habit does not belong to user");
+    }
     
     // Find existing log for this habit on this date
     const existing = await ctx.db
@@ -64,6 +76,7 @@ export const logHabitCompletion = mutation({
       .collect();
     
     const existingLog = existing.find(l => l.habitId === args.habitId);
+    console.log("Existing log:", !!existingLog);
     
     if (args.completed) {
       if (!existingLog) {
@@ -90,6 +103,7 @@ export const logHabitCompletion = mutation({
       }
     }
     
+    console.log("logHabitCompletion success");
     return { success: true };
   },
 });
