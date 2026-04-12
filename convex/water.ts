@@ -2,11 +2,23 @@ import { query, mutation } from "./_generated/server";
 import { v } from "convex/values";
 
 async function getUserFromToken(ctx: any, token: string) {
+  console.log("getUserFromToken called with token:", token?.substring(0, 20) + "...");
+  
   const credentials = await ctx.db.query("credentials").collect();
+  console.log("Total credentials:", credentials.length);
+  
   const credential = credentials.find((c: any) => c.sessionToken === token);
+  console.log("Found credential:", !!credential);
+  
   if (!credential) return null;
-  if (credential.sessionExpiry < Date.now()) return null;
-  return await ctx.db.get(credential.userId);
+  if (credential.sessionExpiry < Date.now()) {
+    console.log("Session expired");
+    return null;
+  }
+  
+  const user = await ctx.db.get(credential.userId);
+  console.log("Found user:", user?._id);
+  return user;
 }
 
 export const getWaterLog = query({
@@ -32,8 +44,12 @@ export const getWaterLog = query({
 export const addWater = mutation({
   args: { token: v.string(), date: v.string() },
   handler: async (ctx, args) => {
+    console.log("addWater called with:", JSON.stringify(args));
+    
     const user = await getUserFromToken(ctx, args.token);
-    if (!user) throw new Error("Invalid session");
+    console.log("User from token:", user?._id);
+    
+    if (!user) throw new Error("Invalid session - user not found for token");
 
     const existing = await ctx.db
       .query("waterLogs")
@@ -41,6 +57,8 @@ export const addWater = mutation({
         q.eq("userId", user._id).eq("date", args.date)
       )
       .unique();
+    
+    console.log("Existing water log:", existing?._id);
 
     const newGlasses = (existing?.glasses ?? 0) + 1;
     const goalReached = newGlasses === user.waterGoal;
@@ -60,6 +78,7 @@ export const addWater = mutation({
       });
     }
 
+    console.log("addWater success, glasses:", newGlasses);
     return {
       glasses: newGlasses,
       goal: user.waterGoal,
