@@ -472,9 +472,9 @@ async function initStore() {
   updateState("loading", true);
   
   try {
-    const userData = await runQuery("users.getCurrentUser", {});
-    updateState("user", userData);
     const token = getStoredToken();
+    const userData = await runQuery("users.getUserData", { token });
+    updateState("user", userData);
     
     if (userData) {
       const stats = await runQuery("users.getStats", {});
@@ -494,7 +494,7 @@ async function initStore() {
     const tasks = await runQuery("tasks.listTasks", { token, date: today });
     updateState("tasks", tasks || []);
     
-    const water = await runQuery("water.getWaterLog", { date: today });
+    const water = await runQuery("water.getWaterLog", { token, date: today });
     updateState("water", water || { glasses: 0, goal: 8 });
   } catch (error) {
     console.error("Failed to initialize store:", error);
