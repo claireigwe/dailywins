@@ -70,21 +70,24 @@ export const markLetterMastered = mutation({
 
         let existing;
         try {
+          // Query all letter progress for this user+language, then filter by letter
           const results = await ctx.db
             .query("letterProgress")
             .withIndex("by_user_lang", (q) =>
               q.eq("userId", user._id)
                 .eq("language", language)
-                .eq("letter", letter)
             )
             .collect();
-          console.log("[markLetterMastered] query results count:", results.length);
-          if (results.length > 1) {
-            console.error("[markLetterMastered] DUPLICATE LETTER PROGRESS ENTRIES:", results);
+          console.log("[markLetterMastered] all letter progress count:", results.length);
+          // Filter to matching letter
+          const matching = results.filter(r => r.letter === letter);
+          console.log("[markLetterMastered] matching letter count:", matching.length);
+          if (matching.length > 1) {
+            console.error("[markLetterMastered] DUPLICATE LETTER PROGRESS ENTRIES:", matching);
             // Take the first one
-            existing = results[0];
-          } else if (results.length === 1) {
-            existing = results[0];
+            existing = matching[0];
+          } else if (matching.length === 1) {
+            existing = matching[0];
           } else {
             existing = null;
           }
