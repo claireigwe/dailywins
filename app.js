@@ -553,10 +553,19 @@ async function saveReflection(selectedOptions) {
 }
 
 async function markLetterMastered(letter) {
+  console.log('[markLetterMastered] Marking letter as mastered:', letter);
   const token = getStoredToken();
+  console.log('[markLetterMastered] Token present:', !!token);
   if (!token) throw new Error("Not authenticated");
-  await runMutation("language.markLetterMastered", { token, letter });
-  await initStore();
+  try {
+    const result = await runMutation("language.markLetterMastered", { token, letter });
+    console.log('[markLetterMastered] Mutation successful:', result);
+    await initStore();
+    console.log('[markLetterMastered] Store reinitialized');
+  } catch (error) {
+    console.error('[markLetterMastered] Mutation failed:', error);
+    throw error;
+  }
 }
 window.markLetterMastered = markLetterMastered;
 
@@ -1529,6 +1538,12 @@ function startBackgroundSync() {
             } catch (uiErr) {
               console.error('[Sync] Error updating UI:', uiErr);
             }
+          } else {
+            console.log('[Sync] masteredLetters unchanged:', {
+              local: localMastered.length,
+              convex: convexMastered.length,
+              combined: combinedArray.length
+            });
           }
         }
         
