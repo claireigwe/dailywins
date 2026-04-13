@@ -1458,15 +1458,19 @@ function startBackgroundSync() {
         const habitIds = habits?.map(h => h._id) || [];
         // Create set of completed habit IDs from Convex
         const completedIds = new Set(logs?.map(log => log.habitId) || []);
-        // Update completion status: true if in Convex logs, otherwise keep local value
+        // Update completion status: trust server for cross-device sync
         habitIds.forEach(habitId => {
-          if (completedIds.has(habitId)) {
+          const serverCompleted = completedIds.has(habitId);
+          const localCompleted = window.todayData.done[habitId];
+          console.log(`[Sync] Habit ${habitId}: server=${serverCompleted}, local=${localCompleted}`);
+          
+          if (serverCompleted) {
             window.todayData.done[habitId] = true;
-          } else if (window.todayData.done[habitId] === undefined) {
-            // Only set to false if not already defined locally (avoid overwriting pending mutations)
+          } else {
+            // Server says not completed - trust server for cross-device sync
+            // (mutations are immediate, so server state should reflect local state quickly)
             window.todayData.done[habitId] = false;
           }
-          // If local value is true but server says false, keep true (pending sync)
         });
         saveState();
         if (typeof renderHabits === 'function') renderHabits();

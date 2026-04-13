@@ -2549,6 +2549,7 @@ function toggleHabitAnimated(id, pts, el){
     saveState();renderHabits();renderHeader();
     // Sync to Convex
     const token = localStorage.getItem('dailywins_token');
+    console.log('[Habit] Uncheck sync conditions:', { token: !!token, runMutation: !!window.runMutation, id, isLang: id === 'lang', isValidConvexId, convexId });
     if (token && window.runMutation && id !== 'lang' && isValidConvexId) {
       const today = new Date().toISOString().slice(0,10);
       const completed = false;
