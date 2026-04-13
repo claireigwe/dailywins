@@ -1126,6 +1126,14 @@ function rateWord(rating){
   toast(rating===2?'✓ Great! See you in '+days+(days===1?' day':' days')+'':rating===1?'~ Coming back soon':'✗ Will review again shortly','',2000);
   // Auto advance
   setTimeout(()=>vocabNav(1),400);
+  
+  // Sync to Convex
+  if (window.runMutation) {
+    const token = localStorage.getItem('dailywins_token');
+    if (token) {
+      window.runMutation("language.rateVocabWord", { token, wordId: w.id, rating }).catch(e => console.error('Failed to sync vocab rating:', e));
+    }
+  }
 }
 
 function getDueWords(){
@@ -1714,7 +1722,8 @@ function answerLang(chosen,correct,btn){
   if(state.langAnswered)return;
   state.langAnswered=true;
   const res=document.getElementById('langResult');
-  if(chosen===correct){
+  const correctAnswer = chosen===correct;
+  if(correctAnswer){
     btn.classList.add('correct');res.textContent='✅ Correct! Great work!';res.className='lang-result correct';
     state.langCorrect++;beep('ok');toast('Correct! +language XP 🌍','green');
     if(!todayData.done['lang'])setTimeout(()=>toggleHabit('lang',15),600);
@@ -1724,6 +1733,15 @@ function answerLang(chosen,correct,btn){
   }
   saveState();
   setTimeout(()=>{state.langIndex=(state.langIndex+1)%getLangData().length;state.langAnswered=false;saveState();renderLang();},2200);
+  
+  // Sync to Convex
+  if (window.runMutation) {
+    const token = localStorage.getItem('dailywins_token');
+    if (token) {
+      const today = todayKey();
+      window.runMutation("language.logLangChallenge", { token, date: today, correct: correctAnswer }).catch(e => console.error('Failed to sync language challenge:', e));
+    }
+  }
 }
 
 function showHint(){toast('💡 '+curWord().hint,'',3000);}
@@ -1773,6 +1791,11 @@ function markMastered(){
     renderLearn();renderAlphaProgress();renderHeader();checkBadges();
     if(state.masteredLetters.length>=ALPHABET.length){setTimeout(confetti,300);toast('🎉 Full alphabet mastered!','gold',5000);}
     if(state.curLetterIdx<ALPHABET.length-1)setTimeout(()=>goLetter(1),400);
+    
+    // Sync to Convex
+    if (window.markLetterMastered) {
+      window.markLetterMastered(l.letter).catch(e => console.error('Failed to sync letter mastery:', e));
+    }
   }else{
     toast('Already mastered! Keep going →');
     if(state.curLetterIdx<ALPHABET.length-1)goLetter(1);

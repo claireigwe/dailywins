@@ -553,7 +553,9 @@ async function saveReflection(selectedOptions) {
 }
 
 async function markLetterMastered(letter) {
-  await runMutation("language.markLetterMastered", { letter });
+  const token = getStoredToken();
+  if (!token) throw new Error("Not authenticated");
+  await runMutation("language.markLetterMastered", { token, letter });
   await initStore();
 }
 
@@ -1494,6 +1496,53 @@ function startBackgroundSync() {
         window.todayData.water = Math.max(window.todayData.water || 0, water.glasses || 0);
         saveState();
         if (typeof renderWater === 'function') renderWater();
+      }
+      
+      // Sync language data
+      console.log('[Sync] Fetching language data from Convex...');
+      try {
+        // Sync letter progress
+        const letterProgress = await runQuery("language.getLetterProgress", { token });
+        console.log('[Sync] Letter progress from Convex:', letterProgress?.length || 0);
+        if (letterProgress && window.state) {
+          const masteredLetters = letterProgress.filter(lp => lp.mastered).map(lp => lp.letter);
+          window.state.masteredLetters = masteredLetters;
+          console.log('[Sync] Updated masteredLetters:', masteredLetters.length);
+        }
+        
+        // Sync vocab SRS
+        const dueWords = await runQuery("language.getDueWords", { token });
+        console.log('[Sync] Due words from Convex:', dueWords?.length || 0);
+        if (dueWords && window.state) {
+          // Update vocabSRS with data from Convex
+          if (!window.state.vocabSRS) window.state.vocabSRS = {};
+          dueWords.forEach(word => {
+            window.state.vocabSRS[word.wordId] = {
+              level: word.level,
+              nextReview: word.nextReview,
+              correct: word.correct,
+              wrong: word.wrong
+            };
+          });
+          console.log('[Sync] Updated vocabSRS with', dueWords.length, 'words');
+        }
+        
+        // Sync today's language challenge answer
+        const langChallenge = await runQuery("language.getLangChallengeForDate", { token, date: today });
+        console.log('[Sync] Language challenge for today:', langChallenge);
+        if (langChallenge && window.state) {
+          window.state.langAnswered = true;
+          if (langChallenge.correct) {
+            window.state.langCorrect = (window.state.langCorrect || 0) + 1;
+          }
+        }
+        
+        if (letterProgress || dueWords || langChallenge) {
+          saveState();
+          console.log('[Sync] Language data saved');
+        }
+      } catch (langErr) {
+        console.error('[Sync] Error syncing language data:', langErr);
       }
       
       // Sync stats

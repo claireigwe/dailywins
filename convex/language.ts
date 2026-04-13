@@ -1,19 +1,16 @@
 import { query, mutation } from "./_generated/server";
 import { v } from "convex/values";
+import { getUserIdFromToken } from "./auth";
 
 const SRS_INTERVALS = [0, 1, 3, 7, 14, 30];
 
 export const getLetterProgress = query({
-  args: {},
-  handler: async (ctx) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) return [];
+  args: { token: v.string() },
+  handler: async (ctx, args) => {
+    const userId = await getUserIdFromToken(ctx, args.token);
+    if (!userId) return [];
 
-    const user = await ctx.db
-      .query("users")
-      .withIndex("by_email", (q) => q.eq("email", identity.email!))
-      .unique();
-
+    const user = await ctx.db.get(userId);
     if (!user) return [];
 
     const progress = await ctx.db
@@ -28,16 +25,12 @@ export const getLetterProgress = query({
 });
 
 export const markLetterMastered = mutation({
-  args: { letter: v.string() },
+  args: { token: v.string(), letter: v.string() },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Unauthenticated");
+    const userId = await getUserIdFromToken(ctx, args.token);
+    if (!userId) throw new Error("Invalid session");
 
-    const user = await ctx.db
-      .query("users")
-      .withIndex("by_email", (q) => q.eq("email", identity.email!))
-      .unique();
-
+    const user = await ctx.db.get(userId);
     if (!user) throw new Error("User not found");
 
     const existing = await ctx.db
@@ -79,16 +72,12 @@ export const markLetterMastered = mutation({
 });
 
 export const getVocabProgress = query({
-  args: { wordId: v.string() },
+  args: { token: v.string(), wordId: v.string() },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) return null;
+    const userId = await getUserIdFromToken(ctx, args.token);
+    if (!userId) return null;
 
-    const user = await ctx.db
-      .query("users")
-      .withIndex("by_email", (q) => q.eq("email", identity.email!))
-      .unique();
-
+    const user = await ctx.db.get(userId);
     if (!user) return null;
 
     const progress = await ctx.db
@@ -104,18 +93,15 @@ export const getVocabProgress = query({
 
 export const rateVocabWord = mutation({
   args: {
+    token: v.string(),
     wordId: v.string(),
     rating: v.number(),
   },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Unauthenticated");
+    const userId = await getUserIdFromToken(ctx, args.token);
+    if (!userId) throw new Error("Invalid session");
 
-    const user = await ctx.db
-      .query("users")
-      .withIndex("by_email", (q) => q.eq("email", identity.email!))
-      .unique();
-
+    const user = await ctx.db.get(userId);
     if (!user) throw new Error("User not found");
 
     const existing = await ctx.db
@@ -184,16 +170,12 @@ export const rateVocabWord = mutation({
 });
 
 export const getDueWords = query({
-  args: {},
-  handler: async (ctx) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) return [];
+  args: { token: v.string() },
+  handler: async (ctx, args) => {
+    const userId = await getUserIdFromToken(ctx, args.token);
+    if (!userId) return [];
 
-    const user = await ctx.db
-      .query("users")
-      .withIndex("by_email", (q) => q.eq("email", identity.email!))
-      .unique();
-
+    const user = await ctx.db.get(userId);
     if (!user) return [];
 
     const now = Date.now();
@@ -207,16 +189,12 @@ export const getDueWords = query({
 });
 
 export const logLangChallenge = mutation({
-  args: { date: v.string(), correct: v.boolean() },
+  args: { token: v.string(), date: v.string(), correct: v.boolean() },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Unauthenticated");
+    const userId = await getUserIdFromToken(ctx, args.token);
+    if (!userId) throw new Error("Invalid session");
 
-    const user = await ctx.db
-      .query("users")
-      .withIndex("by_email", (q) => q.eq("email", identity.email!))
-      .unique();
-
+    const user = await ctx.db.get(userId);
     if (!user) throw new Error("User not found");
 
     await ctx.db.insert("langChallengeLogs", {
@@ -237,16 +215,12 @@ export const logLangChallenge = mutation({
 });
 
 export const getLangChallengeForDate = query({
-  args: { date: v.string() },
+  args: { token: v.string(), date: v.string() },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) return null;
+    const userId = await getUserIdFromToken(ctx, args.token);
+    if (!userId) return null;
 
-    const user = await ctx.db
-      .query("users")
-      .withIndex("by_email", (q) => q.eq("email", identity.email!))
-      .unique();
-
+    const user = await ctx.db.get(userId);
     if (!user) return null;
 
     const log = await ctx.db
