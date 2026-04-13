@@ -1,5 +1,6 @@
 import { query, mutation } from "./_generated/server";
 import { v } from "convex/values";
+import { getUserIdFromToken } from "./auth";
 
 export const getDailyStats = query({
   args: { date: v.string() },
@@ -137,34 +138,54 @@ export const getMonthStats = query({
 });
 
 export const checkBadges = query({
-  args: {},
-  handler: async (ctx) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) return [];
+  args: { token: v.string() },
+  handler: async (ctx, args) => {
+    const userId = await getUserIdFromToken(ctx, args.token);
+    if (!userId) return [];
 
-    const user = await ctx.db
-      .query("users")
-      .withIndex("by_email", (q) => q.eq("email", identity.email!))
-      .unique();
-
+    const user = await ctx.db.get(userId);
     if (!user) return [];
 
     const userBadges = await ctx.db
       .query("badges")
-      .withIndex("by_user", (q) => q.eq("userId", user._id))
+      .withIndex("by_user", (q) => q.eq("userId", userId))
       .collect();
 
     const letterProgress = await ctx.db
       .query("letterProgress")
       .withIndex("by_user_lang", (q) =>
-        q.eq("userId", user._id).eq("language", user.language)
+        q.eq("userId", userId).eq("language", user.language)
       )
       .collect();
 
     const langCorrectCount = await ctx.db
       .query("langChallengeLogs")
-      .withIndex("by_user", (q) => q.eq("userId", user._id))
+      .withIndex("by_user", (q) => q.eq("userId", userId))
       .collect();
+
+    // Calculate perfect days (days where all habits were completed)
+    const habitLogs = await ctx.db
+      .query("habitLogs")
+      .withIndex("by_user", (q) => q.eq("userId", userId))
+      .collect();
+    const habits = await ctx.db
+      .query("habits")
+      .withIndex("by_user", (q) => q.eq("userId", userId))
+      .collect();
+    const totalHabits = habits.filter(h => !h.archived).length;
+    // Group logs by date
+    const logsByDate = new Map();
+    habitLogs.forEach(log => {
+      const dateLogs = logsByDate.get(log.date) || [];
+      dateLogs.push(log);
+      logsByDate.set(log.date, dateLogs);
+    });
+    let perfectDays = 0;
+    for (const [date, dateLogs] of logsByDate) {
+      if (dateLogs.length === totalHabits && totalHabits > 0) {
+        perfectDays++;
+      }
+    }
 
     const unlockedBadges = [];
 
@@ -190,9 +211,13 @@ export const checkBadges = query({
       unlockedBadges.push({ id: "abc", name: "Alphabet Hero", icon: "🔤" });
     }
 
+    if (perfectDays >= 10 && !userBadges.find((b) => b.badgeId === "iron")) {
+      unlockedBadges.push({ id: "iron", name: "Iron Will", icon: "🏋️" });
+    }
+
     for (const badge of unlockedBadges) {
       await ctx.db.insert("badges", {
-        userId: user._id,
+        userId,
         badgeId: badge.id,
         unlockedAt: Date.now(),
       });
@@ -203,21 +228,14 @@ export const checkBadges = query({
 });
 
 export const getAllBadges = query({
-  args: {},
-  handler: async (ctx) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) return [];
-
-    const user = await ctx.db
-      .query("users")
-      .withIndex("by_email", (q) => q.eq("email", identity.email!))
-      .unique();
-
-    if (!user) return [];
+  args: { token: v.string() },
+  handler: async (ctx, args) => {
+    const userId = await getUserIdFromToken(ctx, args.token);
+    if (!userId) return [];
 
     const userBadges = await ctx.db
       .query("badges")
-      .withIndex("by_user", (q) => q.eq("userId", user._id))
+      .withIndex("by_user", (q) => q.eq("userId", userId))
       .collect();
 
     const allBadges = [

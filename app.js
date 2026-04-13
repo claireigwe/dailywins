@@ -257,6 +257,70 @@ async function ensureHabitsInConvex(token) {
 
 window.ensureHabitsInConvex = ensureHabitsInConvex;
 
+async function loadSettingsFromConvex(token) {
+  try {
+    const result = await runQuery("users.getUserSettings", { token });
+    if (result && result.settings) {
+      return result.settings;
+    }
+    return null;
+  } catch (error) {
+    console.error('Failed to load settings:', error);
+    return null;
+  }
+}
+
+async function saveSettingsToConvex(token, settings) {
+  try {
+    // settings should be an object with fields matching updateUserSettings args
+    const result = await runMutation("users.updateUserSettings", { token, ...settings });
+    return result;
+  } catch (error) {
+    console.error('Failed to save settings:', error);
+    throw error;
+  }
+}
+
+async function loadBadgesFromConvex(token) {
+  try {
+    const badges = await runQuery("stats.getAllBadges", { token });
+    return badges || [];
+  } catch (error) {
+    console.error('Failed to load badges:', error);
+    return [];
+  }
+}
+
+async function checkAndUnlockBadges(token) {
+  try {
+    const unlocked = await runQuery("stats.checkBadges", { token });
+    return unlocked || [];
+  } catch (error) {
+    console.error('Failed to check badges:', error);
+    return [];
+  }
+}
+
+
+
+async function resetUserDataInConvex(token) {
+  try {
+    const result = await runMutation("users.resetUserData", { token });
+    return result;
+  } catch (error) {
+    console.error('Failed to reset user data in Convex:', error);
+    throw error;
+  }
+}
+
+window.loadSettingsFromConvex = loadSettingsFromConvex;
+window.saveSettingsToConvex = saveSettingsToConvex;
+window.loadBadgesFromConvex = loadBadgesFromConvex;
+window.checkAndUnlockBadges = checkAndUnlockBadges;
+window.resetUserDataInConvex = resetUserDataInConvex;
+
+window.getStoredToken = getStoredToken;
+
 async function checkAuth() {
   if (!convexInitialized) {
     await initAuth();
@@ -380,21 +444,34 @@ function logoutUser() {
   });
 }
 
-function toggleTheme() {
+async function toggleTheme() {
   const html = document.documentElement;
   const currentTheme = html.getAttribute('data-theme');
   const newTheme = currentTheme === 'dark' ? '' : 'dark';
   
   if (newTheme) {
     html.setAttribute('data-theme', newTheme);
+    localStorage.setItem('theme', newTheme);
   } else {
     html.removeAttribute('data-theme');
+    localStorage.removeItem('theme');
   }
   
   if (typeof state !== 'undefined') {
     state.settings = state.settings || {};
     state.settings.theme = newTheme;
     saveState();
+  }
+  
+  // Sync theme to Convex
+  try {
+    const token = window.getStoredToken && window.getStoredToken();
+    if (token && window.saveSettingsToConvex) {
+      await window.saveSettingsToConvex(token, { theme: newTheme });
+      console.log('Theme synced to Convex');
+    }
+  } catch (error) {
+    console.error('Failed to sync theme to Convex:', error);
   }
   
   const toggleEl = document.getElementById('themeToggle');
@@ -549,9 +626,8 @@ async function saveIntention(text) {
 }
 
 async function saveReflection(selectedOptions) {
-  const today = new Date().toISOString().slice(0, 10);
-  await runMutation("reflections.saveReflection", { date: today, selectedOptions });
-  await initStore();
+  console.log('Reflection feature is disabled');
+  if (window.toast) window.toast('Reflection feature is currently disabled', '', 2000);
 }
 
 async function markLetterMastered(letter) {
@@ -1365,6 +1441,107 @@ async function loadUserDataFromConvex() {
     // Load habit logs for today to restore completion state
     const today = new Date().toISOString().slice(0, 10);
     console.log('Fetching habit logs for today:', today);
+    
+    // Load settings from Convex
+    const settings = await loadSettingsFromConvex(token);
+    if (settings) {
+      window.state.settings = window.state.settings || {};
+      // Map Convex settings fields to local state
+      if (settings.notificationEnabled !== undefined) window.state.settings.notif = settings.notificationEnabled;
+      if (settings.soundEnabled !== undefined) window.state.settings.sound = settings.soundEnabled;
+      if (settings.wakeTime) window.state.settings.wakeTime = settings.wakeTime;
+      if (settings.theme !== undefined) {
+        window.state.settings.theme = settings.theme;
+        if (settings.theme) {
+          document.documentElement.setAttribute('data-theme', settings.theme);
+          localStorage.setItem('theme', settings.theme);
+        } else {
+          document.documentElement.removeAttribute('data-theme');
+          localStorage.removeItem('theme');
+        }
+      }
+      // reflectionOptions stored separately maybe
+      console.log('Settings loaded from Convex:', settings);
+      saveState();
+      if (typeof renderSettings === 'function') renderSettings();
+    }
+
+    // Load badges from Convex
+    const badges = await loadBadgesFromConvex(token);
+    if (badges.length > 0) {
+      // Store badges in state
+      window.state.badges = badges;
+      console.log('Badges loaded from Convex:', badges.length);
+      // Sync badge keys to localStorage for compatibility with local checkBadges
+      const previousKeys = {};
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key.startsWith('badge_')) previousKeys[key] = true;
+      }
+      const unlockedIds = new Set();
+      badges.forEach(badge => {
+        const key = `badge_${badge.id}`;
+        if (badge.unlocked) {
+          localStorage.setItem(key, '1');
+          unlockedIds.add(badge.id);
+        } else {
+          localStorage.removeItem(key);
+        }
+        delete previousKeys[key];
+      });
+      // Remove any leftover badge keys that don't exist in Convex
+      Object.keys(previousKeys).forEach(key => localStorage.removeItem(key));
+      // Show toast for newly unlocked badges (compared to previous localStorage)
+      const previousUnlockedIds = new Set();
+      Object.keys(localStorage).forEach(key => {
+        if (key.startsWith('badge_') && localStorage.getItem(key) === '1') {
+          const id = key.replace('badge_', '');
+          previousUnlockedIds.add(id);
+        }
+      });
+      unlockedIds.forEach(id => {
+        if (!previousUnlockedIds.has(id)) {
+          const badge = badges.find(b => b.id === id);
+          if (badge && window.toast) {
+            window.toast(`🏅 Badge unlocked: ${badge.name}`, 'gold', 4000);
+          }
+          if (window.confetti) window.confetti();
+        }
+      });
+      saveState();
+      if (typeof renderBadges === 'function') renderBadges();
+    }
+
+    // Check for newly unlocked badges (based on latest stats)
+    const unlocked = await checkAndUnlockBadges(token);
+    if (unlocked.length > 0) {
+      console.log('New badges unlocked:', unlocked);
+      // Re-fetch badges
+      const updatedBadges = await loadBadgesFromConvex(token);
+      window.state.badges = updatedBadges;
+      // Show toast for each newly unlocked badge (they may have been unlocked just now)
+      unlocked.forEach(badge => {
+        if (window.toast) {
+          window.toast(`🏅 Badge unlocked: ${badge.name}`, 'gold', 4000);
+        }
+        if (window.confetti) window.confetti();
+      });
+      // Sync badge keys again
+      updatedBadges.forEach(badge => {
+        const key = `badge_${badge.id}`;
+        if (badge.unlocked) {
+          localStorage.setItem(key, '1');
+        } else {
+          localStorage.removeItem(key);
+        }
+      });
+      saveState();
+      // Trigger UI update if needed
+      if (typeof renderBadges === 'function') renderBadges();
+    }
+
+    // Reflection feature removed in this version
+
     const habitLogs = await runQuery("habits.getHabitLogs", { token, date: today });
     console.log('Habit logs:', habitLogs);
 
@@ -1617,6 +1794,84 @@ function startBackgroundSync() {
         saveState();
         if (typeof renderHeader === 'function') renderHeader();
         if (waterGoalChanged && typeof renderWater === 'function') renderWater();
+      }
+      
+      // Sync badges from Convex
+      try {
+        // Load current badges from Convex
+        const badges = await loadBadgesFromConvex(token);
+        if (badges.length > 0) {
+          // Store badges in state
+          window.state.badges = badges;
+          // Sync badge keys to localStorage for compatibility with local checkBadges
+          const previousKeys = {};
+          for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+            if (key.startsWith('badge_')) previousKeys[key] = true;
+          }
+          const unlockedIds = new Set();
+          badges.forEach(badge => {
+            const key = `badge_${badge.id}`;
+            if (badge.unlocked) {
+              localStorage.setItem(key, '1');
+              unlockedIds.add(badge.id);
+            } else {
+              localStorage.removeItem(key);
+            }
+            delete previousKeys[key];
+          });
+          // Remove any leftover badge keys that don't exist in Convex
+          Object.keys(previousKeys).forEach(key => localStorage.removeItem(key));
+          // Show toast for newly unlocked badges (compared to previous localStorage)
+          const previousUnlockedIds = new Set();
+          Object.keys(localStorage).forEach(key => {
+            if (key.startsWith('badge_') && localStorage.getItem(key) === '1') {
+              const id = key.replace('badge_', '');
+              previousUnlockedIds.add(id);
+            }
+          });
+          unlockedIds.forEach(id => {
+            if (!previousUnlockedIds.has(id)) {
+              const badge = badges.find(b => b.id === id);
+              if (badge && window.toast) {
+                window.toast(`🏅 Badge unlocked: ${badge.name}`, 'gold', 4000);
+              }
+              if (window.confetti) window.confetti();
+            }
+          });
+          saveState();
+          if (typeof renderBadges === 'function') renderBadges();
+        }
+
+        // Check for newly unlocked badges (based on latest stats)
+        const unlocked = await checkAndUnlockBadges(token);
+        if (unlocked.length > 0) {
+          console.log('[Sync] New badges unlocked:', unlocked);
+          // Re-fetch badges
+          const updatedBadges = await loadBadgesFromConvex(token);
+          window.state.badges = updatedBadges;
+          // Show toast for each newly unlocked badge (they may have been unlocked just now)
+          unlocked.forEach(badge => {
+            if (window.toast) {
+              window.toast(`🏅 Badge unlocked: ${badge.name}`, 'gold', 4000);
+            }
+            if (window.confetti) window.confetti();
+          });
+          // Sync badge keys again
+          updatedBadges.forEach(badge => {
+            const key = `badge_${badge.id}`;
+            if (badge.unlocked) {
+              localStorage.setItem(key, '1');
+            } else {
+              localStorage.removeItem(key);
+            }
+          });
+          saveState();
+          // Trigger UI update if needed
+          if (typeof renderBadges === 'function') renderBadges();
+        }
+      } catch (badgeErr) {
+        console.error('[Sync] Error syncing badges:', badgeErr);
       }
       
       console.log(`[Sync #${syncCount}] Complete`);

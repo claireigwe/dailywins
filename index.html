@@ -338,7 +338,7 @@
   body.theme-evening{--gold:#e07830;--surface:#151020;--bg:#0a0808;}
   body.theme-night{--gold:#a070ff;--surface:#10101a;--bg:#080810;}
 
-  /* ── END OF DAY REFLECTION ── */
+  /* ── END OF DAY REFLECTION ── (feature removed in this version)
   .reflection-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px;margin-bottom:20px;display:none;}
   .reflection-card.show{display:block;animation:fadeUp 0.4s ease;}
   .reflection-label{font-size:13px;font-weight:600;color:var(--text);margin-bottom:10px;}
@@ -349,6 +349,7 @@
   .reflection-save-btn{width:100%;padding:12px;background:rgba(240,192,64,0.12);border:1px solid rgba(240,192,64,0.4);border-radius:var(--radius-sm);color:var(--gold);font-family:'Instrument Sans',sans-serif;font-size:14px;font-weight:600;cursor:pointer;transition:all 0.2s;}
   .reflection-save-btn:active{transform:scale(0.98);}
   .reflection-done{font-size:13px;color:var(--green);text-align:center;padding:8px;display:none;}
+  */
 
   /* ── WINS CHART ── */
   .wins-chart{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:20px;}
@@ -711,21 +712,23 @@
         </div>
       </div>
       <!-- END OF DAY REFLECTION -->
-      <div class="reflection-card" id="reflectionCard">
-        <div class="reflection-label">🌙 End of day — <span>what helped you win today?</span></div>
-        <div class="reflection-opts" id="reflectionOpts">
-          <div class="reflection-opt" onclick="toggleReflOpt(this)">💪 Worked out</div>
-          <div class="reflection-opt" onclick="toggleReflOpt(this)">🌅 Woke up early</div>
-          <div class="reflection-opt" onclick="toggleReflOpt(this)">🥗 Ate well</div>
-          <div class="reflection-opt" onclick="toggleReflOpt(this)">💧 Stayed hydrated</div>
-          <div class="reflection-opt" onclick="toggleReflOpt(this)">📚 Studied Spanish</div>
-          <div class="reflection-opt" onclick="toggleReflOpt(this)">✅ Cleared my tasks</div>
-          <div class="reflection-opt" onclick="toggleReflOpt(this)">😴 Slept well</div>
-          <div class="reflection-opt" onclick="toggleReflOpt(this)">🧘 Stayed calm</div>
-        </div>
-        <button class="reflection-save-btn" onclick="saveReflection()">Save reflection ✓</button>
-        <div class="reflection-done" id="reflectionDone">✅ Reflection saved! See you tomorrow.</div>
-      </div>
+       <!-- Reflection feature removed in this version
+       <div class="reflection-card" id="reflectionCard">
+         <div class="reflection-label">🌙 End of day — <span>what helped you win today?</span></div>
+         <div class="reflection-opts" id="reflectionOpts">
+           <div class="reflection-opt" onclick="toggleReflOpt(this)">💪 Worked out</div>
+           <div class="reflection-opt" onclick="toggleReflOpt(this)">🌅 Woke up early</div>
+           <div class="reflection-opt" onclick="toggleReflOpt(this)">🥗 Ate well</div>
+           <div class="reflection-opt" onclick="toggleReflOpt(this)">💧 Stayed hydrated</div>
+           <div class="reflection-opt" onclick="toggleReflOpt(this)">📚 Studied Spanish</div>
+           <div class="reflection-opt" onclick="toggleReflOpt(this)">✅ Cleared my tasks</div>
+           <div class="reflection-opt" onclick="toggleReflOpt(this)">😴 Slept well</div>
+           <div class="reflection-opt" onclick="toggleReflOpt(this)">🧘 Stayed calm</div>
+         </div>
+         <button class="reflection-save-btn" onclick="saveReflection()">Save reflection ✓</button>
+         <div class="reflection-done" id="reflectionDone">✅ Reflection saved! See you tomorrow.</div>
+       </div>
+       -->
       <h2 class="section-title">🌍 <span>LANGUAGE</span> CHALLENGE</h2>
       <div class="lang-card">
         <div class="lang-card-header">
@@ -1583,7 +1586,7 @@ function renderAll(){
   safeRun(renderHabits);safeRun(renderTasks);safeRun(renderLang);
   safeRun(renderStats);safeRun(renderBadges);safeRun(renderWeek);
   safeRun(renderSettings);safeRun(renderNudge);safeRun(renderLearn);
-  safeRun(renderAlphaProgress);safeRun(renderReflection);
+  safeRun(renderAlphaProgress);
   setTimeout(updatePhaseProg,100);
 }
 
@@ -1968,7 +1971,7 @@ function selectTemplate(val){
     toast('Category changed to '+template.name+'! 🎯');
   }
 }
-function selectLang(val){
+async function selectLang(val){
   const langMap={spanish:'🇪🇸 Spanish',french:'🇫🇷 French',german:'🇩🇪 German',japanese:'🇯🇵 Japanese',yoruba:'🇳🇬 Yoruba'};
   state.settings.lang=val;
   state.langIndex=0;
@@ -1981,6 +1984,16 @@ function selectLang(val){
   renderLang();
   renderSettings();
   toast('Language changed! 🌍');
+  // Sync to Convex
+  try {
+    const token = window.getStoredToken && window.getStoredToken();
+    if (token && window.saveSettingsToConvex) {
+      await window.saveSettingsToConvex(token, { language: val });
+      console.log('Language synced to Convex');
+    }
+  } catch (error) {
+    console.error('Failed to sync language to Convex:', error);
+  }
 }
 // Close dropdowns when clicking outside
 document.addEventListener('click',function(e){
@@ -2022,9 +2035,19 @@ function formatTime(t){
   return hr+':'+(m<10?'0'+m:m)+' '+ampm;
 }
 function saveSettings(){state.settings.wakeTime=document.getElementById('wakeTime').value;saveState();}
-function saveAlarmTime(){
+async function saveAlarmTime(){
   state.settings.wakeTime=document.getElementById('wakeTime').value;
   saveState();renderSettings();
+  // Sync to Convex
+  try {
+    const token = window.getStoredToken && window.getStoredToken();
+    if (token && window.saveSettingsToConvex) {
+      await window.saveSettingsToConvex(token, { wakeTime: state.settings.wakeTime });
+      console.log('Wake time synced to Convex');
+    }
+  } catch (error) {
+    console.error('Failed to sync wake time to Convex:', error);
+  }
   if(state.settings.alarm)scheduleAlarmSW();
   toast('Alarm set for '+formatTime(state.settings.wakeTime)+' ⏰','gold');
 }
@@ -2059,8 +2082,18 @@ function cancelAlarmSW(){
     if(reg.active)reg.active.postMessage({type:'CANCEL_ALARM'});
   });
 }
-function toggleNotif(){
+async function toggleNotif(){
   state.settings.notif=!state.settings.notif;saveState();renderSettings();
+  // Sync to Convex
+  try {
+    const token = window.getStoredToken && window.getStoredToken();
+    if (token && window.saveSettingsToConvex) {
+      await window.saveSettingsToConvex(token, { notificationEnabled: state.settings.notif });
+      console.log('Notification setting synced to Convex');
+    }
+  } catch (error) {
+    console.error('Failed to sync notification setting to Convex:', error);
+  }
   if(state.settings.notif&&'Notification' in window){
     Notification.requestPermission().then(p=>{
       if(p!=='granted'){state.settings.notif=false;saveState();renderSettings();toast('Notifications blocked');}
@@ -2068,8 +2101,38 @@ function toggleNotif(){
     });
   }
 }
-function toggleSound(){state.settings.sound=!state.settings.sound;saveState();renderSettings();if(state.settings.sound)beep('ping');}
-function confirmReset(){if(confirm('Reset ALL progress? This cannot be undone.')){localStorage.clear();location.reload();}}
+async function toggleSound(){
+  state.settings.sound=!state.settings.sound;saveState();renderSettings();
+  // Sync to Convex
+  try {
+    const token = window.getStoredToken && window.getStoredToken();
+    if (token && window.saveSettingsToConvex) {
+      await window.saveSettingsToConvex(token, { soundEnabled: state.settings.sound });
+      console.log('Sound setting synced to Convex');
+    }
+  } catch (error) {
+    console.error('Failed to sync sound setting to Convex:', error);
+  }
+  if(state.settings.sound)beep('ping');
+}
+async function confirmReset(){
+  if(!confirm('Reset ALL progress? This cannot be undone.')) return;
+  
+  try {
+    // Try to reset data in Convex first
+    const token = window.getStoredToken && window.getStoredToken();
+    if (token && window.resetUserDataInConvex) {
+      await window.resetUserDataInConvex(token);
+      console.log('User data reset in Convex');
+    }
+  } catch (error) {
+    console.error('Failed to reset data in Convex:', error);
+    // Continue with local reset anyway
+  }
+  
+  localStorage.clear();
+  location.reload();
+}
 
 
 
@@ -2382,16 +2445,10 @@ function renderReflection(){
 function toggleReflOpt(el){
   el.classList.toggle('selected');
 }
-function saveReflection(){
-  const selected=[...document.querySelectorAll('.reflection-opt.selected')].map(el=>el.textContent);
-  if(!selected.length){toast('Pick at least one!','',2000);return;}
-  todayData.reflection={saved:true,items:selected,ts:Date.now()};
-  saveState();
-  const done=$id('reflectionDone');if(done)done.style.display='block';
-  const btn=document.querySelector('.reflection-save-btn');if(btn)btn.style.display='none';
-  toast('Reflection saved! 🌙 Great day.','green',3000);
-  state.totalPoints+=10;
-  renderHeader();
+async function saveReflection(){
+  // Reflection feature removed in this version
+  console.log('Reflection feature is disabled');
+  toast('Reflection feature is currently disabled','',2000);
 }
 
 // ════════════════════════════════════

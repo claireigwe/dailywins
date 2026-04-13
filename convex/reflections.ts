@@ -1,23 +1,17 @@
 import { query, mutation } from "./_generated/server";
 import { v } from "convex/values";
+import { getUserIdFromToken } from "./auth";
 
 export const getReflection = query({
-  args: { date: v.string() },
+  args: { token: v.string(), date: v.string() },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) return null;
-
-    const user = await ctx.db
-      .query("users")
-      .withIndex("by_email", (q) => q.eq("email", identity.email!))
-      .unique();
-
-    if (!user) return null;
+    const userId = await getUserIdFromToken(ctx, args.token);
+    if (!userId) return null;
 
     const reflection = await ctx.db
       .query("reflections")
       .withIndex("by_user_date", (q) =>
-        q.eq("userId", user._id).eq("date", args.date)
+        q.eq("userId", userId).eq("date", args.date)
       )
       .unique();
 
@@ -27,24 +21,21 @@ export const getReflection = query({
 
 export const saveReflection = mutation({
   args: {
+    token: v.string(),
     date: v.string(),
     selectedOptions: v.array(v.string()),
   },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Unauthenticated");
+    const userId = await getUserIdFromToken(ctx, args.token);
+    if (!userId) throw new Error("Invalid session");
 
-    const user = await ctx.db
-      .query("users")
-      .withIndex("by_email", (q) => q.eq("email", identity.email!))
-      .unique();
-
+    const user = await ctx.db.get(userId);
     if (!user) throw new Error("User not found");
 
     const existing = await ctx.db
       .query("reflections")
       .withIndex("by_user_date", (q) =>
-        q.eq("userId", user._id).eq("date", args.date)
+        q.eq("userId", userId).eq("date", args.date)
       )
       .unique();
 
@@ -55,7 +46,7 @@ export const saveReflection = mutation({
       });
     } else {
       await ctx.db.insert("reflections", {
-        userId: user._id,
+        userId,
         date: args.date,
         selectedOptions: args.selectedOptions,
         savedAt: Date.now(),
@@ -71,21 +62,14 @@ export const saveReflection = mutation({
 });
 
 export const getReflectionOptions = query({
-  args: {},
-  handler: async (ctx) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) return [];
-
-    const user = await ctx.db
-      .query("users")
-      .withIndex("by_email", (q) => q.eq("email", identity.email!))
-      .unique();
-
-    if (!user) return [];
+  args: { token: v.string() },
+  handler: async (ctx, args) => {
+    const userId = await getUserIdFromToken(ctx, args.token);
+    if (!userId) return [];
 
     const settings = await ctx.db
       .query("userSettings")
-      .withIndex("by_user", (q) => q.eq("userId", user._id))
+      .withIndex("by_user", (q) => q.eq("userId", userId))
       .unique();
 
     return settings?.reflectionOptions ?? [];
@@ -93,21 +77,14 @@ export const getReflectionOptions = query({
 });
 
 export const updateReflectionOptions = mutation({
-  args: { options: v.array(v.string()) },
+  args: { token: v.string(), options: v.array(v.string()) },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Unauthenticated");
-
-    const user = await ctx.db
-      .query("users")
-      .withIndex("by_email", (q) => q.eq("email", identity.email!))
-      .unique();
-
-    if (!user) throw new Error("User not found");
+    const userId = await getUserIdFromToken(ctx, args.token);
+    if (!userId) throw new Error("Invalid session");
 
     const settings = await ctx.db
       .query("userSettings")
-      .withIndex("by_user", (q) => q.eq("userId", user._id))
+      .withIndex("by_user", (q) => q.eq("userId", userId))
       .unique();
 
     if (settings) {
