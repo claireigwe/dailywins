@@ -151,6 +151,7 @@ export const markLetterMastered = mutation({
       }
 
       console.log("[markLetterMastered] Letter marked mastered successfully");
+      return { alreadyMastered: false };
     } catch (error) {
       console.error("[markLetterMastered] Error:", error);
       console.error("[markLetterMastered] Stack:", error.stack);
