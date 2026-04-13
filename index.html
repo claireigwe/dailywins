@@ -2755,5 +2755,13 @@ if('serviceWorker' in navigator){
 </div>
 
 <script src="app.js"></script>
+<script>
+  // Ensure reflection card is hidden (feature removed)
+  const reflectionCard = document.getElementById('reflectionCard');
+  if (reflectionCard) {
+    reflectionCard.style.display = 'none';
+    reflectionCard.classList.remove('show');
+  }
+</script>
 </body>
 </html>

@@ -1280,17 +1280,29 @@ async function loadUserDataFromConvex() {
       window.state.bestStreak = user.bestStreak || 0;
       window.state.totalDays = user.totalDays || 0;
       window.state.settings = window.state.settings || {};
+      const previousLang = window.state.settings.lang;
       window.state.settings.lang = user.language || 'spanish';
       window.state.settings.template = user.template || 'health';
+      // Reset language challenge index if language changed
+      let languageChanged = false;
+      if (previousLang !== window.state.settings.lang) {
+        window.state.langIndex = 0;
+        window.state.langAnswered = false;
+        languageChanged = true;
+      }
       window.state.userName = user.name || '';
       console.log('Setting userName to:', window.state.userName);
       if (window.state.settings.theme) {
         document.documentElement.setAttribute('data-theme', window.state.settings.theme);
       }
       saveState();
+      if (languageChanged) {
+        if (typeof renderLang === 'function') renderLang();
+        if (typeof renderSettings === 'function') renderSettings();
+      }
       console.log('State saved, userName:', window.state.userName);
       console.log('State updated, totalPoints preserved from localStorage:', window.state.totalPoints);
-    }
+      }
     
     console.log('Fetching habits...');
     let habits = await runQuery("habits.getHabits", { token });
@@ -1464,6 +1476,7 @@ async function loadUserDataFromConvex() {
       console.log('Settings loaded from Convex:', settings);
       saveState();
       if (typeof renderSettings === 'function') renderSettings();
+      if (typeof renderLang === 'function') renderLang();
     }
 
     // Load badges from Convex
@@ -1791,9 +1804,26 @@ function startBackgroundSync() {
           window.WATER_GOAL = userData.waterGoal;
           waterGoalChanged = true;
         }
+        // Update language setting if changed
+        let languageChanged = false;
+        if (userData.language) {
+          const previousLang = window.state.settings && window.state.settings.lang;
+          window.state.settings = window.state.settings || {};
+          window.state.settings.lang = userData.language;
+          // Reset language challenge index if language changed
+          if (previousLang !== userData.language) {
+            window.state.langIndex = 0;
+            window.state.langAnswered = false;
+            languageChanged = true;
+          }
+        }
         saveState();
         if (typeof renderHeader === 'function') renderHeader();
         if (waterGoalChanged && typeof renderWater === 'function') renderWater();
+        if (languageChanged) {
+          if (typeof renderLang === 'function') renderLang();
+          if (typeof renderSettings === 'function') renderSettings();
+        }
       }
       
       // Sync badges from Convex
