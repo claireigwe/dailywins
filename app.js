@@ -129,6 +129,7 @@ async function runMutation(mutationPath, args) {
 
 // Expose to window for use in index.html
 window.runMutation = runMutation;
+window.runQuery = runQuery;
 
 async function runQuery(queryPath, args) {
   // Wait for Convex to be ready
@@ -1782,6 +1783,25 @@ window.forceHabitSync = async () => {
   console.log('Force habit sync result:', result);
   alert('Habit sync complete. Created: ' + result.created + ', existing: ' + result.existing);
 };
+
+// Debug helper to check letter sync status
+window.checkLetterSync = () => {
+  console.log('=== LETTER SYNC DIAGNOSTIC ===');
+  console.log('window.state.masteredLetters:', window.state?.masteredLetters);
+  console.log('localStorage dailywins_state:', localStorage.getItem('dailywins_state'));
+  const token = localStorage.getItem('dailywins_token');
+  console.log('Token present:', !!token);
+  if (token && window.runQuery) {
+    // Optionally fetch Convex data
+    window.runQuery("language.getLetterProgress", { token }).then(progress => {
+      console.log('Convex letter progress:', progress);
+      const convexMastered = progress.filter(lp => lp.mastered).map(lp => lp.letter);
+      console.log('Convex mastered letters:', convexMastered);
+    }).catch(e => console.error('Failed to fetch Convex data:', e));
+  }
+  console.log('=== END DIAGNOSTIC ===');
+};
+
 initApp().catch(e => {
   console.error('Init error:', e);
   hideLoading();
