@@ -7,19 +7,32 @@ const SRS_INTERVALS = [0, 1, 3, 7, 14, 30];
 export const getLetterProgress = query({
   args: { token: v.string() },
   handler: async (ctx, args) => {
+    console.log("[getLetterProgress] Starting with token:", args.token?.substring(0, 10) + "...");
     const userId = await getUserIdFromToken(ctx, args.token);
+    console.log("[getLetterProgress] userId:", userId);
     if (!userId) return [];
 
     const user = await ctx.db.get(userId);
+    console.log("[getLetterProgress] user found:", !!user);
     if (!user) return [];
+    
+    // Ensure user has language field (backward compatibility)
+    let language = user.language;
+    if (!language) {
+      language = "spanish";
+      await ctx.db.patch(user._id, { language });
+      console.log("[getLetterProgress] patched user language to spanish");
+    }
+    console.log("[getLetterProgress] language:", language);
 
     const progress = await ctx.db
       .query("letterProgress")
       .withIndex("by_user_lang", (q) =>
-        q.eq("userId", user._id).eq("language", user.language)
+        q.eq("userId", user._id).eq("language", language)
       )
       .collect();
-
+    
+    console.log("[getLetterProgress] progress count:", progress.length);
     return progress;
   },
 });
@@ -27,47 +40,119 @@ export const getLetterProgress = query({
 export const markLetterMastered = mutation({
   args: { token: v.string(), letter: v.string() },
   handler: async (ctx, args) => {
-    const userId = await getUserIdFromToken(ctx, args.token);
-    if (!userId) throw new Error("Invalid session");
+    try {
+      console.log("[markLetterMastered] ENTER handler");
+      console.log("[markLetterMastered] Starting with args:", args);
+      const userId = await getUserIdFromToken(ctx, args.token);
+      console.log("[markLetterMastered] userId:", userId);
+      if (!userId) throw new Error("Invalid session");
 
-    const user = await ctx.db.get(userId);
-    if (!user) throw new Error("User not found");
-
-    const existing = await ctx.db
-      .query("letterProgress")
-      .withIndex("by_user_lang", (q) =>
-        q.eq("userId", user._id)
-          .eq("language", user.language)
-          .eq("letter", args.letter)
-      )
-      .unique();
-
-    if (existing) {
-      if (!existing.mastered) {
-        await ctx.db.patch(existing._id, {
-          mastered: true,
-          masteredAt: Date.now(),
-        });
-        await ctx.db.patch(user._id, {
-          totalPoints: user.totalPoints + 10,
-        });
+      const user = await ctx.db.get(userId);
+      console.log("[markLetterMastered] user:", user);
+      if (!user) throw new Error("User not found");
+      // Ensure totalPoints is a number
+      if (typeof user.totalPoints !== 'number') {
+        await ctx.db.patch(user._id, { totalPoints: 0 });
+        user.totalPoints = 0;
+        console.log("[markLetterMastered] fixed user.totalPoints to 0");
       }
-      return { alreadyMastered: true };
+      
+      // Ensure user has language field (backward compatibility)
+      let language = user.language;
+      if (!language) {
+        language = "spanish";
+        await ctx.db.patch(user._id, { language });
+        console.log("[markLetterMastered] patched user language to spanish");
+      }
+      console.log("[markLetterMastered] language:", language);
+      const letter = args.letter.toUpperCase();
+      console.log("[markLetterMastered] letter (original):", args.letter, "-> (uppercase):", letter);
+
+        let existing;
+        try {
+          const results = await ctx.db
+            .query("letterProgress")
+            .withIndex("by_user_lang", (q) =>
+              q.eq("userId", user._id)
+                .eq("language", language)
+                .eq("letter", letter)
+            )
+            .collect();
+          console.log("[markLetterMastered] query results count:", results.length);
+          if (results.length > 1) {
+            console.error("[markLetterMastered] DUPLICATE LETTER PROGRESS ENTRIES:", results);
+            // Take the first one
+            existing = results[0];
+          } else if (results.length === 1) {
+            existing = results[0];
+          } else {
+            existing = null;
+          }
+          console.log("[markLetterMastered] existing progress:", existing);
+        } catch (queryError) {
+          console.error("[markLetterMastered] Query failed:", queryError);
+          throw queryError;
+        }
+
+      if (existing) {
+        if (!existing.mastered) {
+          try {
+            await ctx.db.patch(existing._id, {
+              mastered: true,
+              masteredAt: Date.now(),
+            });
+            console.log("[markLetterMastered] Patched existing progress");
+          } catch (patchError) {
+            console.error("[markLetterMastered] Patch existing failed:", patchError);
+            throw patchError;
+          }
+          const newTotalPoints = user.totalPoints + 10;
+          try {
+            await ctx.db.patch(user._id, {
+              totalPoints: newTotalPoints,
+            });
+            console.log("[markLetterMastered] Updated user points from", user.totalPoints, "to", newTotalPoints);
+          } catch (userPatchError) {
+            console.error("[markLetterMastered] User patch failed:", userPatchError);
+            throw userPatchError;
+          }
+        }
+        return { alreadyMastered: true };
+      }
+
+      const insertDoc = {
+        userId: user._id,
+        language: language,
+        letter: letter,
+        mastered: true,
+        masteredAt: Date.now(),
+      };
+      console.log("[markLetterMastered] Inserting letter progress:", insertDoc);
+      try {
+        await ctx.db.insert("letterProgress", insertDoc);
+        console.log("[markLetterMastered] Insert succeeded");
+      } catch (insertError) {
+        console.error("[markLetterMastered] Insert failed:", insertError);
+        throw insertError;
+      }
+
+      const newTotalPoints2 = user.totalPoints + 10;
+      try {
+        await ctx.db.patch(user._id, {
+          totalPoints: newTotalPoints2,
+        });
+        console.log("[markLetterMastered] User points updated from", user.totalPoints, "to", newTotalPoints2);
+      } catch (userPatchError) {
+        console.error("[markLetterMastered] User points patch failed:", userPatchError);
+        throw userPatchError;
+      }
+
+      console.log("[markLetterMastered] Letter marked mastered successfully");
+    } catch (error) {
+      console.error("[markLetterMastered] Error:", error);
+      console.error("[markLetterMastered] Stack:", error.stack);
+      throw error;
     }
-
-    await ctx.db.insert("letterProgress", {
-      userId: user._id,
-      language: user.language,
-      letter: args.letter,
-      mastered: true,
-      masteredAt: Date.now(),
-    });
-
-    await ctx.db.patch(user._id, {
-      totalPoints: user.totalPoints + 10,
-    });
-
-    return { alreadyMastered: false };
   },
 });
 
@@ -231,5 +316,26 @@ export const getLangChallengeForDate = query({
       .unique();
 
     return log;
+  },
+});
+
+export const backfillUserLanguages = mutation({
+  args: { token: v.string() },
+  handler: async (ctx, args) => {
+    const userId = await getUserIdFromToken(ctx, args.token);
+    if (!userId) throw new Error("Unauthenticated");
+
+    // Get all users
+    const users = await ctx.db.query("users").collect();
+    let updated = 0;
+    
+    for (const user of users) {
+      if (!user.language) {
+        await ctx.db.patch(user._id, { language: "spanish" });
+        updated++;
+      }
+    }
+    
+    return { updated, total: users.length };
   },
 });

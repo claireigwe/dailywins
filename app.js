@@ -1524,6 +1524,7 @@ function startBackgroundSync() {
           // Only update if changed
           if (JSON.stringify(window.state.masteredLetters) !== JSON.stringify(combinedArray)) {
             window.state.masteredLetters = combinedArray;
+            saveState();
             console.log('[Sync] Merged masteredLetters:', {
               local: localMastered.length,
               convex: convexMastered.length,
