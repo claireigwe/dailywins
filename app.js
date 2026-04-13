@@ -558,6 +558,7 @@ async function markLetterMastered(letter) {
   await runMutation("language.markLetterMastered", { token, letter });
   await initStore();
 }
+window.markLetterMastered = markLetterMastered;
 
 // ════════════════════════════════════
 //  ONBOARDING
@@ -1505,18 +1506,29 @@ function startBackgroundSync() {
         const letterProgress = await runQuery("language.getLetterProgress", { token });
         console.log('[Sync] Letter progress from Convex:', letterProgress?.length || 0);
         if (letterProgress && window.state) {
-          const masteredLetters = letterProgress.filter(lp => lp.mastered).map(lp => lp.letter);
-          window.state.masteredLetters = masteredLetters;
-          console.log('[Sync] Updated masteredLetters:', masteredLetters.length);
-          // Update UI if functions exist
-          try {
-            if (typeof window.updatePhaseProg === 'function') window.updatePhaseProg();
-            if (typeof window.renderAlphaProgress === 'function') window.renderAlphaProgress();
-            if (typeof window.renderBrowse === 'function' && document.getElementById('mode-browse') && (document.getElementById('mode-browse').style.display === 'block' || window.getComputedStyle(document.getElementById('mode-browse')).display === 'block')) {
-              window.renderBrowse();
+          const convexMastered = letterProgress.filter(lp => lp.mastered).map(lp => lp.letter);
+          const localMastered = window.state.masteredLetters || [];
+          // Union of both sets (keep all mastered letters from either source)
+          const combinedSet = new Set([...localMastered, ...convexMastered]);
+          const combinedArray = Array.from(combinedSet);
+          // Only update if changed
+          if (JSON.stringify(window.state.masteredLetters) !== JSON.stringify(combinedArray)) {
+            window.state.masteredLetters = combinedArray;
+            console.log('[Sync] Merged masteredLetters:', {
+              local: localMastered.length,
+              convex: convexMastered.length,
+              combined: combinedArray.length
+            });
+            // Update UI if functions exist
+            try {
+              if (typeof window.updatePhaseProg === 'function') window.updatePhaseProg();
+              if (typeof window.renderAlphaProgress === 'function') window.renderAlphaProgress();
+              if (typeof window.renderBrowse === 'function' && document.getElementById('mode-browse') && (document.getElementById('mode-browse').style.display === 'block' || window.getComputedStyle(document.getElementById('mode-browse')).display === 'block')) {
+                window.renderBrowse();
+              }
+            } catch (uiErr) {
+              console.error('[Sync] Error updating UI:', uiErr);
             }
-          } catch (uiErr) {
-            console.error('[Sync] Error updating UI:', uiErr);
           }
         }
         
