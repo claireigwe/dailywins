@@ -1372,7 +1372,7 @@ async function loadUserDataFromConvex() {
     const waterLog = await runQuery("water.getWaterLog", { token, date: today });
     console.log('Water log from Convex:', waterLog);
     if (waterLog && window.todayData) {
-      window.todayData.water = Math.max(window.todayData.water || 0, waterLog.glasses || 0);
+      window.todayData.water = waterLog.glasses || 0;
       saveState();
       if (typeof renderWater === 'function') renderWater();
     }
