@@ -1549,13 +1549,13 @@ function startBackgroundSync() {
           }
         }
         
-        // Sync vocab SRS
-        const dueWords = await runQuery("language.getDueWords", { token });
-        console.log('[Sync] Due words from Convex:', dueWords?.length || 0);
-        if (dueWords && window.state) {
+        // Sync vocab SRS - get ALL progress, not just due words
+        const allVocabProgress = await runQuery("language.getAllVocabProgress", { token });
+        console.log('[Sync] All vocab progress from Convex:', allVocabProgress?.length || 0);
+        if (allVocabProgress && window.state) {
           // Update vocabSRS with data from Convex
           if (!window.state.vocabSRS) window.state.vocabSRS = {};
-          dueWords.forEach(word => {
+          allVocabProgress.forEach(word => {
             window.state.vocabSRS[word.wordId] = {
               level: word.level,
               nextReview: word.nextReview,
@@ -1563,20 +1563,24 @@ function startBackgroundSync() {
               wrong: word.wrong
             };
           });
-          console.log('[Sync] Updated vocabSRS with', dueWords.length, 'words');
+          console.log('[Sync] Updated vocabSRS with', allVocabProgress.length, 'words');
         }
         
-        // Sync today's language challenge answer
+        // Sync language challenge answers
         const langChallenge = await runQuery("language.getLangChallengeForDate", { token, date: today });
         console.log('[Sync] Language challenge for today:', langChallenge);
-        if (langChallenge && window.state) {
-          window.state.langAnswered = true;
-          if (langChallenge.correct) {
-            window.state.langCorrect = (window.state.langCorrect || 0) + 1;
+        const langCorrectTotal = await runQuery("language.getLangCorrectTotal", { token });
+        console.log('[Sync] Total correct language challenges from Convex:', langCorrectTotal);
+        if (window.state) {
+          // Update today's answered flag
+          if (langChallenge) {
+            window.state.langAnswered = true;
           }
+          // Update total correct count from Convex (source of truth)
+          window.state.langCorrect = langCorrectTotal || 0;
         }
         
-        if (letterProgress || dueWords || langChallenge) {
+        if (letterProgress || allVocabProgress || langChallenge) {
           saveState();
           console.log('[Sync] Language data saved');
           // Update phase progress UI

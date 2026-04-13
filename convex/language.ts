@@ -277,6 +277,24 @@ export const getDueWords = query({
   },
 });
 
+export const getAllVocabProgress = query({
+  args: { token: v.string() },
+  handler: async (ctx, args) => {
+    const userId = await getUserIdFromToken(ctx, args.token);
+    if (!userId) return [];
+
+    const user = await ctx.db.get(userId);
+    if (!user) return [];
+
+    const progress = await ctx.db
+      .query("vocabProgress")
+      .withIndex("by_user_nextReview", (q) => q.eq("userId", user._id))
+      .collect();
+
+    return progress;
+  },
+});
+
 export const logLangChallenge = mutation({
   args: { token: v.string(), date: v.string(), correct: v.boolean() },
   handler: async (ctx, args) => {
@@ -320,6 +338,24 @@ export const getLangChallengeForDate = query({
       .unique();
 
     return log;
+  },
+});
+
+export const getLangCorrectTotal = query({
+  args: { token: v.string() },
+  handler: async (ctx, args) => {
+    const userId = await getUserIdFromToken(ctx, args.token);
+    if (!userId) return 0;
+
+    const user = await ctx.db.get(userId);
+    if (!user) return 0;
+
+    const logs = await ctx.db
+      .query("langChallengeLogs")
+      .withIndex("by_user_date", (q) => q.eq("userId", user._id))
+      .collect();
+
+    return logs.filter(l => l.correct).length;
   },
 });
 
