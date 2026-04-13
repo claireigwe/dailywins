@@ -474,6 +474,7 @@ async function initStore() {
   try {
     const userData = await runQuery("users.getCurrentUser", {});
     updateState("user", userData);
+    const token = getStoredToken();
     
     if (userData) {
       const stats = await runQuery("users.getStats", {});
@@ -484,13 +485,13 @@ async function initStore() {
     }
     
     const today = new Date().toISOString().slice(0, 10);
-    const habits = await runQuery("habits.listHabits", {});
+    const habits = await runQuery("habits.getHabits", { token });
     updateState("habits", habits || []);
     
     const todayHabits = await runQuery("habits.getHabitsForDate", { date: today });
     updateState("todayHabits", todayHabits || []);
     
-    const tasks = await runQuery("tasks.listTasks", {});
+    const tasks = await runQuery("tasks.listTasks", { token, date: today });
     updateState("tasks", tasks || []);
     
     const water = await runQuery("water.getWaterLog", { date: today });
