@@ -1788,7 +1788,10 @@ function markMastered(){
   if(!state.masteredLetters.includes(l.letter)){
     state.masteredLetters.push(l.letter);state.totalPoints+=10;
     saveState();beep('ok');toast(`✓ "${l.letter}" mastered! +10 pts`,'green');
-    renderLearn();renderAlphaProgress();renderHeader();checkBadges();
+    renderLearn();renderAlphaProgress();updatePhaseProg();renderHeader();checkBadges();
+    if (document.getElementById('mode-browse').style.display === 'block' || window.getComputedStyle(document.getElementById('mode-browse')).display === 'block') {
+      renderBrowse();
+    }
     if(state.masteredLetters.length>=ALPHABET.length){setTimeout(confetti,300);toast('🎉 Full alphabet mastered!','gold',5000);}
     if(state.curLetterIdx<ALPHABET.length-1)setTimeout(()=>goLetter(1),400);
     

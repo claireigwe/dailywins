@@ -1508,6 +1508,16 @@ function startBackgroundSync() {
           const masteredLetters = letterProgress.filter(lp => lp.mastered).map(lp => lp.letter);
           window.state.masteredLetters = masteredLetters;
           console.log('[Sync] Updated masteredLetters:', masteredLetters.length);
+          // Update UI if functions exist
+          try {
+            if (typeof window.updatePhaseProg === 'function') window.updatePhaseProg();
+            if (typeof window.renderAlphaProgress === 'function') window.renderAlphaProgress();
+            if (typeof window.renderBrowse === 'function' && document.getElementById('mode-browse') && (document.getElementById('mode-browse').style.display === 'block' || window.getComputedStyle(document.getElementById('mode-browse')).display === 'block')) {
+              window.renderBrowse();
+            }
+          } catch (uiErr) {
+            console.error('[Sync] Error updating UI:', uiErr);
+          }
         }
         
         // Sync vocab SRS
@@ -1540,6 +1550,16 @@ function startBackgroundSync() {
         if (letterProgress || dueWords || langChallenge) {
           saveState();
           console.log('[Sync] Language data saved');
+          // Update phase progress UI
+          try {
+            if (typeof window.updatePhaseProg === 'function') window.updatePhaseProg();
+            if (typeof window.renderAlphaProgress === 'function') window.renderAlphaProgress();
+            if (typeof window.renderBrowse === 'function' && document.getElementById('mode-browse') && (document.getElementById('mode-browse').style.display === 'block' || window.getComputedStyle(document.getElementById('mode-browse')).display === 'block')) {
+              window.renderBrowse();
+            }
+          } catch (uiErr) {
+            console.error('[Sync] Error updating UI:', uiErr);
+          }
         }
       } catch (langErr) {
         console.error('[Sync] Error syncing language data:', langErr);
