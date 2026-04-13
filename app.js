@@ -1416,18 +1416,29 @@ function startBackgroundSync() {
         const convexTaskMap = new Map();
         convexTasks.forEach(t => convexTaskMap.set(t._id, t));
         
-        // Update existing local tasks that have Convex IDs with latest status
-        const updatedTasks = window.state.tasks.map(localTask => {
-          if (localTask._id && convexTaskMap.has(localTask._id)) {
-            // Task exists in Convex - update with latest status
-            const convexTask = convexTaskMap.get(localTask._id);
-            return { ...localTask, done: convexTask.done, text: convexTask.text };
+        // Update existing local tasks and remove those deleted from Convex
+        const updatedTasks = [];
+        const localIds = new Set();
+        
+        // First pass: keep only local tasks that are still in Convex or are local-only
+        window.state.tasks.forEach(localTask => {
+          if (localTask._id) {
+            // Task has Convex ID - check if it still exists in Convex
+            if (convexTaskMap.has(localTask._id)) {
+              // Task exists in Convex - update with latest status
+              const convexTask = convexTaskMap.get(localTask._id);
+              updatedTasks.push({ ...localTask, done: convexTask.done, text: convexTask.text });
+              localIds.add(localTask._id);
+            }
+            // If task not in Convex (deleted), skip it (do not add to updatedTasks)
+          } else {
+            // Local-only task (no _id) - keep it
+            updatedTasks.push(localTask);
+            if (localTask.id) localIds.add(localTask.id);
           }
-          return localTask; // Keep local-only task as-is
         });
         
         // Add new tasks from Convex that aren't in local state
-        const localIds = new Set(window.state.tasks.map(t => t._id || t.id));
         convexTasks.forEach(ct => {
           if (!localIds.has(ct._id)) {
             updatedTasks.push({ _id: ct._id, text: ct.text, done: ct.done, id: Date.now() });
