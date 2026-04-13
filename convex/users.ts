@@ -1,20 +1,16 @@
 import { query, mutation } from "./_generated/server";
 import { v } from "convex/values";
+import { getUserIdFromToken } from "./auth";
 
 export const getUserData = query({
   args: { token: v.string() },
   handler: async (ctx, args) => {
-    const credentials = await ctx.db.query("credentials").collect();
-    const credential = credentials.find(
-      (c: any) => c.sessionToken === args.token
-    );
-    
-    if (!credential) return null;
-    if (credential.sessionExpiry < Date.now()) return null;
-    
-    const user = await ctx.db.get(credential.userId);
+    const userId = await getUserIdFromToken(ctx, args.token);
+    if (!userId) return null;
+
+    const user = await ctx.db.get(userId);
     if (!user) return null;
-    
+
     return {
       currentStreak: user.currentStreak,
       bestStreak: user.bestStreak,
@@ -130,20 +126,10 @@ export const completeOnboarding = mutation({
     language: v.string(),
   },
   handler: async (ctx, args) => {
-    const credentials = await ctx.db.query("credentials").collect();
-    const credential = credentials.find(
-      (c: any) => c.sessionToken === args.token
-    );
-    
-    if (!credential) {
-      throw new Error("Invalid session");
-    }
-    
-    if (credential.sessionExpiry < Date.now()) {
-      throw new Error("Session expired");
-    }
-    
-    const user = await ctx.db.get(credential.userId);
+    const userId = await getUserIdFromToken(ctx, args.token);
+    if (!userId) throw new Error("Invalid session");
+
+    const user = await ctx.db.get(userId);
     if (!user) throw new Error("User not found");
 
     await ctx.db.patch(user._id, {

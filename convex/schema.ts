@@ -10,6 +10,17 @@ export default defineSchema({
     sessionToken: v.string(),
     sessionExpiry: v.number(),
   }).index("by_email", ["email"]),
+  // Sessions table for multiple device login
+  sessions: defineTable({
+    userId: v.id("users"),
+    token: v.string(),
+    expiry: v.number(),
+    createdAt: v.number(),
+    deviceInfo: v.optional(v.string()),
+  })
+    .index("by_token", ["token"])
+    .index("by_user", ["userId"])
+    .index("by_expiry", ["expiry"]),
 
   // Users table - extended from Convex Auth
   users: defineTable({

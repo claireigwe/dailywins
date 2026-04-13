@@ -15,6 +15,27 @@ function generateToken(): string {
   return Array.from(array).map(b => b.toString(16).padStart(2, "0")).join("");
 }
 
+export async function getUserIdFromToken(ctx: any, token: string): Promise<string | null> {
+  // First check sessions table
+  const session = await ctx.db
+    .query("sessions")
+    .withIndex("by_token", (q) => q.eq("token", token))
+    .unique();
+  
+  if (session && session.expiry > Date.now()) {
+    return session.userId;
+  }
+  
+  // Fallback to credentials for backward compatibility
+  const credentials = await ctx.db.query("credentials").collect();
+  const credential = credentials.find(c => c.sessionToken === token);
+  if (credential && credential.sessionExpiry > Date.now()) {
+    return credential.userId;
+  }
+  
+  return null;
+}
+
 export const signUp = mutation({
   args: {
     email: v.string(),
@@ -64,6 +85,14 @@ export const signUp = mutation({
       passwordHash,
       sessionToken: token,
       sessionExpiry: expiry,
+    });
+
+    // Create session for multi-device support
+    await ctx.db.insert("sessions", {
+      userId,
+      token,
+      expiry,
+      createdAt: Date.now(),
     });
     
     await ctx.db.insert("userSettings", {
@@ -120,6 +149,14 @@ export const logIn = mutation({
       sessionToken: token,
       sessionExpiry: expiry,
     });
+
+    // Create session for multi-device support
+    await ctx.db.insert("sessions", {
+      userId: credential.userId,
+      token,
+      expiry,
+      createdAt: Date.now(),
+    });
     
     return {
       success: true,
@@ -132,9 +169,18 @@ export const logIn = mutation({
 export const logOut = mutation({
   args: { token: v.string() },
   handler: async (ctx, args) => {
+    // Delete session for this token
+    const session = await ctx.db
+      .query("sessions")
+      .withIndex("by_token", (q) => q.eq("token", args.token))
+      .unique();
+    if (session) {
+      await ctx.db.delete(session._id);
+    }
+    
+    // Also clear credential token if it matches (for backward compatibility)
     const credentials = await ctx.db.query("credentials").collect();
     const credential = credentials.find(c => c.sessionToken === args.token);
-    
     if (credential) {
       await ctx.db.patch(credential._id, {
         sessionToken: "",
@@ -153,19 +199,12 @@ export const verifyToken = query({
       return null;
     }
     
-    const credentials = await ctx.db.query("credentials").collect();
-    const credential = credentials.find(c => c.sessionToken === args.token);
-    
-    if (!credential) {
+    const userId = await getUserIdFromToken(ctx, args.token);
+    if (!userId) {
       return null;
     }
     
-    if (credential.sessionExpiry < Date.now()) {
-      return null;
-    }
-    
-    const user = await ctx.db.get(credential.userId);
-    
+    const user = await ctx.db.get(userId);
     return user;
   },
 });
@@ -180,5 +219,31 @@ export const checkEmailExists = query({
       .unique();
     
     return !!existing;
+  },
+});
+
+export const migrateSessions = mutation({
+  args: {},
+  handler: async (ctx) => {
+    const credentials = await ctx.db.query("credentials").collect();
+    let migrated = 0;
+    for (const cred of credentials) {
+      if (cred.sessionToken && cred.sessionExpiry > Date.now()) {
+        const existing = await ctx.db
+          .query("sessions")
+          .withIndex("by_token", (q) => q.eq("token", cred.sessionToken))
+          .unique();
+        if (!existing) {
+          await ctx.db.insert("sessions", {
+            userId: cred.userId,
+            token: cred.sessionToken,
+            expiry: cred.sessionExpiry,
+            createdAt: Date.now(),
+          });
+          migrated++;
+        }
+      }
+    }
+    return { migrated };
   },
 });

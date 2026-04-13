@@ -146,6 +146,116 @@ async function runQuery(queryPath, args) {
   return convexClient.query(query, args || {});
 }
 
+async function ensureHabitsInConvex(token) {
+  try {
+    console.log('[ensureHabitsInConvex] Starting, token exists:', !!token);
+    console.log('[ensureHabitsInConvex] Checking for missing habits...');
+    // Ensure habitIdMap exists
+    if (!window.habitIdMap) {
+      console.log('[ensureHabitsInConvex] Initializing missing window.habitIdMap');
+      window.habitIdMap = {};
+    }
+    
+    // Get local habits
+    const localHabits = window.HABITS || [];
+    if (localHabits.length === 0) {
+      console.log('[ensureHabitsInConvex] No local habits found');
+      return { created: 0, existing: 0 };
+    }
+    
+    // Get existing habits from Convex
+    const convexHabits = await runQuery("habits.getHabits", { token });
+    console.log('[ensureHabitsInConvex] Convex habits:', convexHabits?.length || 0);
+    
+    // Create a map of existing habits by name+icon for quick lookup
+    const existingHabitMap = new Map();
+    if (convexHabits && convexHabits.length > 0) {
+      convexHabits.forEach(h => {
+        const key = `${h.name}|${h.icon}`;
+        existingHabitMap.set(key, h);
+      });
+    }
+    
+    let createdCount = 0;
+    const createdHabitIds = [];
+    
+    // Create missing habits in Convex
+    for (const localHabit of localHabits) {
+      // Skip special habits like 'lang'
+      if (localHabit.id === 'lang') continue;
+      
+      const key = `${localHabit.name}|${localHabit.icon}`;
+      if (!existingHabitMap.has(key)) {
+        console.log('[ensureHabitsInConvex] Creating missing habit:', localHabit.name);
+        try {
+          // Create habit in Convex using token-based mutation
+          const habitData = {
+            token,
+            name: localHabit.name,
+            icon: localHabit.icon,
+            description: localHabit.sub || '',
+            points: localHabit.pts || 20
+          };
+           
+          try {
+            const habitId = await runMutation("habits.createHabitWithToken", habitData);
+            console.log('[ensureHabitsInConvex] Created habit in Convex:', localHabit.name, 'ID:', habitId);
+            createdHabitIds.push(habitId);
+            createdCount++;
+             
+            // Update habitIdMap with new mapping
+            if (window.habitIdMap) {
+              window.habitIdMap[localHabit.id] = habitId;
+              console.log('[ensureHabitsInConvex] Updated habitIdMap:', localHabit.id, '->', habitId);
+            }
+          } catch (error) {
+            console.error('[ensureHabitsInConvex] Failed to create habit:', error);
+            // If mutation not found, it might not be deployed yet
+            if (error.message.includes('not found')) {
+              console.warn('[ensureHabitsInConvex] Mutation not available yet. Deploy Convex code first.');
+              // Return early since mutation doesn't exist
+              return { created: 0, existing: convexHabits?.length || 0, error: 'Mutation not deployed' };
+            }
+          }
+        } catch (error) {
+          console.error('[ensureHabitsInConvex] Failed to create habit:', error);
+        }
+      } else {
+        console.log('[ensureHabitsInConvex] Habit already exists:', localHabit.name);
+        // Update habitIdMap with existing mapping
+        const existingHabit = existingHabitMap.get(key);
+        if (window.habitIdMap && existingHabit) {
+          window.habitIdMap[localHabit.id] = existingHabit._id;
+          console.log('[ensureHabitsInConvex] Updated habitIdMap with existing:', localHabit.id, '->', existingHabit._id);
+        }
+      }
+    }
+    
+    // Save updated habitIdMap to localStorage
+    if (window.habitIdMap && Object.keys(window.habitIdMap).length > 0) {
+      try {
+        localStorage.setItem('dailywins_habitIdMap', JSON.stringify(window.habitIdMap));
+        console.log(`[ensureHabitsInConvex] Saved habitIdMap to localStorage: ${Object.keys(window.habitIdMap).length} mappings`);
+      } catch (e) {
+        console.error('[ensureHabitsInConvex] Failed to save habitIdMap:', e);
+      }
+    }
+    
+    console.log(`[ensureHabitsInConvex] Completed: ${createdCount} habits created, ${convexHabits?.length || 0} existing`);
+    return { 
+      created: createdCount, 
+      existing: convexHabits?.length || 0,
+      mappings: Object.keys(window.habitIdMap || {}).length
+    };
+    
+  } catch (error) {
+    console.error('[ensureHabitsInConvex] Error:', error);
+    return { created: 0, existing: 0, error: error.message };
+  }
+}
+
+window.ensureHabitsInConvex = ensureHabitsInConvex;
+
 async function checkAuth() {
   if (!convexInitialized) {
     await initAuth();
@@ -253,6 +363,7 @@ async function logOut() {
     }
   }
   
+  stopBackgroundSync();
   storeToken(null);
   currentUser = null;
   authState = AUTH_STATES.LOGGED_OUT;
@@ -428,11 +539,7 @@ async function removeWaterDeprecated() {
   return result;
 }
 
-async function removeWaterDeprecated() {
-  const today = new Date().toISOString().slice(0, 10);
-  const result = await runMutation("water.removeWater", { date: today });
-  updateState("water", { glasses: result.glasses, goal: result.goal });
-}
+
 
 async function saveIntention(text) {
   const today = new Date().toISOString().slice(0, 10);
@@ -804,16 +911,41 @@ function setupOnboardingHandlers(container) {
         
         await completeOnboarding(customHabits, waterGoal, selectedLanguage);
         
-        // Save habits to localStorage before reload so they're available immediately
-        const habitsToSave = customHabits.map((h, i) => ({
-          id: `habit-${i}`,
-          name: h.name,
-          icon: h.icon,
-          pts: h.points || 20,
-          sub: h.description || ''
-        }));
-        localStorage.setItem('dailywins_habits', JSON.stringify(habitsToSave));
-        console.log('Saved habits to localStorage before reload:', habitsToSave);
+        // Try to fetch habits from Convex with their real IDs
+        const token = getStoredToken();
+        let habitsFromConvex = [];
+        if (token) {
+          try {
+            habitsFromConvex = await runQuery("habits.getHabits", { token });
+            console.log('Fetched habits from Convex after onboarding:', habitsFromConvex);
+          } catch (e) {
+            console.error('Failed to fetch habits after onboarding:', e);
+          }
+        }
+
+        // Save habits to localStorage - prefer Convex habits if available
+        if (habitsFromConvex.length > 0) {
+          const habitsToSave = habitsFromConvex.map(h => ({
+            id: h._id,
+            name: h.name,
+            icon: h.icon,
+            pts: h.points || 20,
+            sub: h.description || ''
+          }));
+          localStorage.setItem('dailywins_habits', JSON.stringify(habitsToSave));
+          console.log('Saved Convex habits to localStorage:', habitsToSave);
+        } else {
+          // Fallback to local IDs
+          const habitsToSave = customHabits.map((h, i) => ({
+            id: `habit-${i}`,
+            name: h.name,
+            icon: h.icon,
+            pts: h.points || 20,
+            sub: h.description || ''
+          }));
+          localStorage.setItem('dailywins_habits', JSON.stringify(habitsToSave));
+          console.log('Saved local habits to localStorage:', habitsToSave);
+        }
         
         // Reload to initialize app
         window.location.reload();
@@ -977,7 +1109,9 @@ onAuthChange((state, user) => {
   console.log('Auth state changed:', state, 'user:', user);
   
   // If app is already initialized and we have a token, ignore state changes
+  // (but still ensure background sync is running)
   if (appInitialized && getStoredToken()) {
+    startBackgroundSync();
     return;
   }
   
@@ -999,6 +1133,7 @@ onAuthChange((state, user) => {
     if (typeof renderTasks === 'function') renderTasks();
     appInitialized = true;
     loadUserDataFromConvex().catch(() => {});
+    startBackgroundSync();
     return;
   }
   
@@ -1010,6 +1145,20 @@ onAuthChange((state, user) => {
       onboardingContainer.style.display = 'block';
       renderOnboarding(onboardingContainer);
     }
+    startBackgroundSync();
+  } else if (state === AUTH_STATES.LOGGED_IN) {
+    console.log('User logged in, starting sync');
+    startBackgroundSync();
+    // Ensure UI is rendered
+    if (authScreen) authScreen.style.display = 'none';
+    if (onboardingContainer) onboardingContainer.style.display = 'none';
+    if (typeof renderHabits === 'function') renderHabits();
+    if (typeof renderWater === 'function') renderWater();
+    if (typeof renderHeader === 'function') renderHeader();
+    if (typeof renderLang === 'function') renderLang();
+    if (typeof renderTasks === 'function') renderTasks();
+    appInitialized = true;
+    loadUserDataFromConvex().catch(() => {});
   } else if (state === AUTH_STATES.LOGGED_OUT) {
     console.log('Showing auth screen');
     if (authScreen) authScreen.style.display = 'flex';
@@ -1054,14 +1203,133 @@ async function loadUserDataFromConvex() {
     }
     
     console.log('Fetching habits...');
-    const habits = await runQuery("habits.getHabits", { token });
+    let habits = await runQuery("habits.getHabits", { token });
     console.log('Habits from Convex:', habits);
+    if (habits && habits.length > 0) {
+      console.log('First habit details:', {
+        _id: habits[0]._id,
+        _idLength: habits[0]._id?.length,
+        _idType: typeof habits[0]._id,
+        name: habits[0].name,
+        fullObject: habits[0]
+      });
+    }
+    
+    // Check if we need to create missing habits in Convex
+    const localHabits = window.HABITS || [];
+    console.log('[loadUserDataFromConvex] localHabits count:', localHabits.length, 'Convex habits count:', habits?.length || 0);
+    if (localHabits.length > 0) {
+      console.log('[loadUserDataFromConvex] Calling ensureHabitsInConvex...');
+      const syncResult = await ensureHabitsInConvex(token);
+      console.log('[loadUserDataFromConvex] ensureHabitsInConvex result:', syncResult);
+      if (syncResult.created > 0) {
+        // Habits were created, refetch from Convex to get their IDs
+        console.log('Refetching habits after creation...');
+        habits = await runQuery("habits.getHabits", { token });
+        console.log('Updated habits from Convex:', habits);
+      }
+    } else if (!habits || habits.length === 0) {
+      console.warn('No habits found in Convex or locally');
+    }
     
     // Update HABITS in the main page scope
     window.userHabits = habits || [];
+    console.log('[loadUserDataFromConvex] Set window.userHabits:', window.userHabits.length, 'habits', window.userHabits);
     window.WATER_GOAL = user.waterGoal || 8;
     
     // Also update the HABITS array in index.html if we have habits from Convex
+    // Migrate completion status from old habit IDs to new Convex IDs
+    window.habitIdMap = window.habitIdMap || {};
+    
+    // Always initialize habitIdMap from localStorage if available
+    try {
+      const savedMap = localStorage.getItem('dailywins_habitIdMap');
+      if (savedMap) {
+        window.habitIdMap = { ...window.habitIdMap, ...JSON.parse(savedMap) };
+        console.log('Loaded habitIdMap from localStorage:', Object.keys(window.habitIdMap).length, 'mappings');
+      }
+    } catch (e) {
+      console.error('Error loading habitIdMap:', e);
+    }
+    
+    if (window.HABITS && window.todayData?.done) {
+      const oldHabits = window.HABITS;
+      const done = window.todayData.done;
+      const newDone = {};
+      const matchedConvexIds = new Set();
+      
+      if (habits && habits.length > 0) {
+        // Create a map from (name + icon) to Convex habit for matching
+        const convexHabitMap = new Map();
+        habits.forEach(h => {
+          const key = `${h.name}|${h.icon}`;
+          convexHabitMap.set(key, h);
+        });
+        
+        // First pass: try to match local habits to Convex habits by name+icon
+        oldHabits.forEach(oldHabit => {
+          const key = `${oldHabit.name}|${oldHabit.icon}`;
+          const convexHabit = convexHabitMap.get(key);
+          if (convexHabit && done[oldHabit.id] !== undefined) {
+            newDone[convexHabit._id] = done[oldHabit.id];
+            matchedConvexIds.add(convexHabit._id);
+            // Store mapping from old ID to Convex ID for frontend use
+            window.habitIdMap[oldHabit.id] = convexHabit._id;
+          } else if (done[oldHabit.id] !== undefined) {
+            // No match, keep old ID (might be special habit like 'lang')
+            newDone[oldHabit.id] = done[oldHabit.id];
+          }
+        });
+        
+        // Map Convex IDs to themselves for completeness
+        habits.forEach(h => {
+          window.habitIdMap[h._id] = h._id;
+        });
+        
+        // Add completion status for Convex habits that weren't matched (e.g., habits added on another device)
+        habits.forEach(h => {
+          if (!matchedConvexIds.has(h._id) && done[h._id] === undefined) {
+            // New habit from Convex, not yet completed locally
+            newDone[h._id] = false;
+          } else if (done[h._id] !== undefined) {
+            // Already have completion status for this Convex ID (maybe from previous migration)
+            newDone[h._id] = done[h._id];
+          }
+        });
+      } else {
+        // No Convex habits yet - keep local IDs as-is
+        console.log('No Convex habits found, preserving local habit IDs');
+        oldHabits.forEach(oldHabit => {
+          if (done[oldHabit.id] !== undefined) {
+            newDone[oldHabit.id] = done[oldHabit.id];
+          }
+        });
+      }
+      
+      // Keep any other entries that aren't habits (e.g., 'lang' habit with special ID)
+      Object.keys(done).forEach(key => {
+        if (newDone[key] === undefined && !oldHabits.some(h => h.id === key) && 
+            (!habits || !habits.some(h => h._id === key))) {
+          newDone[key] = done[key];
+        }
+      });
+      
+      window.todayData.done = newDone;
+      console.log('Migrated completion status from old habit IDs to Convex IDs', { 
+        old: Object.keys(done).length, 
+        new: Object.keys(newDone).length,
+        hasConvexHabits: !!(habits && habits.length > 0)
+      });
+      
+      // Save habit ID mapping to localStorage for persistence
+      if (window.habitIdMap && Object.keys(window.habitIdMap).length > 0) {
+        localStorage.setItem('dailywins_habitIdMap', JSON.stringify(window.habitIdMap));
+        console.log('Saved habitIdMap to localStorage:', Object.keys(window.habitIdMap).length, 'mappings');
+      } else {
+        console.log('habitIdMap is empty, not saving to localStorage');
+      }
+    }
+
     if (habits && habits.length > 0) {
       const convexHabits = habits.map(h => ({
         id: h._id,
@@ -1085,7 +1353,16 @@ async function loadUserDataFromConvex() {
     console.log('Fetching habit logs for today:', today);
     const habitLogs = await runQuery("habits.getHabitLogs", { token, date: today });
     console.log('Habit logs:', habitLogs);
-    
+
+    // Load water log for today
+    const waterLog = await runQuery("water.getWaterLog", { token, date: today });
+    console.log('Water log from Convex:', waterLog);
+    if (waterLog && window.todayData) {
+      window.todayData.water = Math.max(window.todayData.water || 0, waterLog.glasses || 0);
+      saveState();
+      if (typeof renderWater === 'function') renderWater();
+    }
+
     // Update todayData.done with completion status
     if (window.todayData && habitLogs) {
       habitLogs.forEach(log => {
@@ -1170,9 +1447,27 @@ function startBackgroundSync() {
       // Sync habit logs
       const logs = await runQuery("habits.getHabitLogs", { token, date: today });
       console.log('[Sync] Habit logs:', logs?.length || 0);
-      if (logs && window.todayData) {
-        // Merge: keep local completions, add Convex completions
-        logs.forEach(log => { window.todayData.done[log.habitId] = true; });
+      if (window.todayData) {
+        // Get habit IDs from Convex to know which habits exist
+        let habits = await runQuery("habits.getHabits", { token });
+        if (habits && habits.length === 0 && window.HABITS && window.HABITS.length > 0) {
+          console.log('[Sync] No habits in Convex, triggering ensureHabitsInConvex');
+          await window.ensureHabitsInConvex(token);
+          habits = await runQuery("habits.getHabits", { token });
+        }
+        const habitIds = habits?.map(h => h._id) || [];
+        // Create set of completed habit IDs from Convex
+        const completedIds = new Set(logs?.map(log => log.habitId) || []);
+        // Update completion status: true if in Convex logs, otherwise keep local value
+        habitIds.forEach(habitId => {
+          if (completedIds.has(habitId)) {
+            window.todayData.done[habitId] = true;
+          } else if (window.todayData.done[habitId] === undefined) {
+            // Only set to false if not already defined locally (avoid overwriting pending mutations)
+            window.todayData.done[habitId] = false;
+          }
+          // If local value is true but server says false, keep true (pending sync)
+        });
         saveState();
         if (typeof renderHabits === 'function') renderHabits();
       }
@@ -1195,8 +1490,15 @@ function startBackgroundSync() {
         if (!window.state.totalPoints || window.state.totalPoints === 0) {
           window.state.totalPoints = userData.totalPoints || 0;
         }
+        // Update water goal if available
+        let waterGoalChanged = false;
+        if (userData.waterGoal && window.WATER_GOAL !== userData.waterGoal) {
+          window.WATER_GOAL = userData.waterGoal;
+          waterGoalChanged = true;
+        }
         saveState();
         if (typeof renderHeader === 'function') renderHeader();
+        if (waterGoalChanged && typeof renderWater === 'function') renderWater();
       }
       
       console.log(`[Sync #${syncCount}] Complete`);
@@ -1335,6 +1637,40 @@ console.log('Elements found:', {
 loadingOverlay.style.display = 'flex';
 authScreen.style.display = 'none';
 window.addEventListener('error', (e) => console.error('Global error:', e.error));
+
+// Debug helper to check habit sync status
+window.checkHabitSync = () => {
+  console.log('=== HABIT SYNC DIAGNOSTIC ===');
+  console.log('window.habitIdMap:', window.habitIdMap);
+  console.log('window.habitIdMap keys:', window.habitIdMap ? Object.keys(window.habitIdMap) : 'none');
+  console.log('window.HABITS:', window.HABITS);
+  console.log('window.userHabits:', window.userHabits);
+  console.log('todayData.done keys:', window.todayData ? Object.keys(window.todayData.done) : 'no todayData');
+  console.log('localStorage dailywins_habitIdMap:', localStorage.getItem('dailywins_habitIdMap'));
+  console.log('localStorage dailywins_habits:', localStorage.getItem('dailywins_habits'));
+  console.log('localStorage dailywins_token:', localStorage.getItem('dailywins_token') ? 'exists' : 'missing');
+  
+  if (window.habitIdMap && window.HABITS) {
+    window.HABITS.forEach(h => {
+      const convexId = window.habitIdMap[h.id];
+      console.log(`Habit "${h.name}" (${h.id}) -> Convex ID: ${convexId || 'NO MAPPING'}`);
+    });
+  }
+  console.log('=== END DIAGNOSTIC ===');
+};
+
+// Debug helper to force habit sync
+window.forceHabitSync = async () => {
+  const token = localStorage.getItem('dailywins_token');
+  if (!token) {
+    console.error('No token found');
+    return;
+  }
+  console.log('Force habit sync starting...');
+  const result = await ensureHabitsInConvex(token);
+  console.log('Force habit sync result:', result);
+  alert('Habit sync complete. Created: ' + result.created + ', existing: ' + result.existing);
+};
 initApp().catch(e => {
   console.error('Init error:', e);
   hideLoading();

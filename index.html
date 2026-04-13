@@ -1438,6 +1438,17 @@ const LANG_DATA={
 // Load habits from localStorage only - no defaults
 const HABITS_KEY = 'dailywins_habits';
 window.HABITS = [];
+window.habitIdMap = (function() {
+  try {
+    const saved = localStorage.getItem('dailywins_habitIdMap');
+    const map = saved ? JSON.parse(saved) : {};
+    console.log('[habitIdMap] Loaded from localStorage:', Object.keys(map).length, 'mappings', map);
+    return map;
+  } catch(e) {
+    console.error('Error loading habitIdMap:', e);
+    return {};
+  }
+})();
 // Also use HABITS as the main reference
 let HABITS = window.HABITS;
 (function loadSavedHabits() {
@@ -1606,18 +1617,64 @@ function renderHabits(){
 }
 
 function toggleHabit(id,pts){
-  if(todayData.done[id]){todayData.done[id]=false;state.totalPoints=Math.max(0,state.totalPoints-pts);toast('Habit unchecked');saveState();renderHabits();renderHeader();return;}
-  todayData.done[id]=true;state.totalPoints+=pts;beep('ok');
-  toast(`+${pts} pts — Habit logged! 🎉`,'gold');
-  const currentHabits = (typeof window !== 'undefined' && window.userHabits) 
-    ? window.userHabits.map(h => ({ id: h._id }))
-    : HABITS;
-  if(currentHabits.every(h=>todayData.done[h.id])){
-    state.streak++;if(state.streak>state.bestStreak)state.bestStreak=state.streak;
-    state.perfectDays++;setTimeout(confetti,200);
-    toast('🔥 PERFECT DAY! Streak: '+state.streak,'green',4000);
+  // Get Convex ID for this habit (mapping from local IDs to Convex IDs)
+  const convexId = getConvexHabitId(id);
+  const isValidConvexId = isConvexId(convexId);
+  console.log('[Habit] toggleHabit called, id:', id, 'convexId:', convexId, 'isValidConvexId:', isValidConvexId);
+  
+  // Use convexId for completion status (todayData.done may have migrated)
+  const wasDone = todayData.done[convexId] !== undefined ? todayData.done[convexId] : todayData.done[id];
+  
+  if (wasDone) {
+    todayData.done[convexId] = false;
+    // Also remove old ID entry if different
+    if (convexId !== id && todayData.done[id] !== undefined) {
+      delete todayData.done[id];
+    }
+    state.totalPoints = Math.max(0, state.totalPoints - pts);
+    toast('Habit unchecked');
+  } else {
+    todayData.done[convexId] = true;
+    // Also remove old ID entry if different
+    if (convexId !== id && todayData.done[id] !== undefined) {
+      delete todayData.done[id];
+    }
+    state.totalPoints += pts;
+    beep('ok');
+    toast(`+${pts} pts — Habit logged! 🎉`, 'gold');
   }
-  saveState();renderHabits();renderHeader();checkBadges();
+  
+  // Sync to Convex
+  const token = localStorage.getItem('dailywins_token');
+  if (token && window.runMutation && id !== 'lang' && isValidConvexId) {
+    const today = new Date().toISOString().slice(0,10);
+    const completed = todayData.done[convexId];
+    console.log('[Habit] toggleHabit mutation with convexId:', convexId);
+    window.runMutation("habits.logHabitCompletion", { token, habitId: convexId, date: today, completed, points: pts })
+      .then(r => console.log('[Habit] Mutation success:', r))
+      .catch(e => console.error('[Habit] Mutation error:', e));
+  } else {
+    console.log('[Habit] toggleHabit sync skipped - token:', !!token, 'runMutation:', !!window.runMutation, 'id === lang:', id === 'lang', 'isValidConvexId:', isValidConvexId);
+  }
+  
+  // Perfect day check (only when checking)
+  if (!wasDone) {
+    const currentHabits = (typeof window !== 'undefined' && window.userHabits) 
+      ? window.userHabits.map(h => ({ id: h._id }))
+      : HABITS;
+    if (currentHabits.every(h => todayData.done[h.id])) {
+      state.streak++;
+      if (state.streak > state.bestStreak) state.bestStreak = state.streak;
+      state.perfectDays++;
+      setTimeout(confetti, 200);
+      toast('🔥 PERFECT DAY! Streak: ' + state.streak, 'green', 4000);
+    }
+  }
+  
+  saveState();
+  renderHabits();
+  renderHeader();
+  checkBadges();
 }
 
 function renderNudge(){
@@ -2386,8 +2443,78 @@ function renderAlarmStatus(){
 //  HABIT CHECK — BETTER ANIMATION
 // ════════════════════════════════════
 function isConvexId(id) {
-  // Convex IDs are typically 24 characters: lowercase letter followed by 23 alphanumeric chars
-  return typeof id === 'string' && /^[a-z][a-z0-9]{23}$/.test(id);
+  // Convex IDs are typically 24 characters: lowercase letter followed by alphanumeric chars
+  // Some Convex IDs may be 32 characters (e.g., jx7f8e74xw0h71166589m5j12984sghj)
+  return typeof id === 'string' && /^[a-z][a-z0-9]{19,31}$/.test(id);
+}
+
+function getConvexHabitId(id) {
+  console.log('[getConvexHabitId] Looking up mapping for id:', id);
+  console.log('[getConvexHabitId] window.habitIdMap exists:', !!window.habitIdMap);
+  if (window.habitIdMap) {
+    console.log('[getConvexHabitId] habitIdMap keys:', Object.keys(window.habitIdMap));
+    console.log('[getConvexHabitId] Looking for id in map:', id in window.habitIdMap);
+  }
+  // If already a Convex ID, return as-is
+  if (isConvexId(id)) {
+    console.log('[getConvexHabitId] id is already a Convex ID');
+    return id;
+  }
+  // Try to map using window.habitIdMap (created during migration)
+  if (window.habitIdMap && window.habitIdMap[id]) {
+    console.log('[getConvexHabitId] Found mapping in habitIdMap:', id, '->', window.habitIdMap[id]);
+    return window.habitIdMap[id];
+  } else if (window.habitIdMap) {
+    console.log('[getConvexHabitId] No mapping found in habitIdMap. Keys:', Object.keys(window.habitIdMap));
+  }
+  // Fallback: try to find matching habit by name+icon
+  // First, find local habit by ID to get its name and icon
+  if (window.HABITS && window.userHabits) {
+    console.log('[getConvexHabitId] Looking for local habit by ID:', id);
+    const localHabit = window.HABITS.find(h => h.id === id);
+    if (localHabit) {
+      console.log('[getConvexHabitId] Found local habit:', localHabit.name, localHabit.icon);
+      // Try to find matching Convex habit by name+icon
+      const convexHabit = window.userHabits.find(h => 
+        h.name === localHabit.name && h.icon === localHabit.icon
+      );
+      if (convexHabit) {
+        console.log('[getConvexHabitId] Found matching Convex habit by name+icon:', convexHabit._id);
+        // Store this mapping for future use
+        if (window.habitIdMap) {
+          window.habitIdMap[id] = convexHabit._id;
+          // Save to localStorage
+          try {
+            localStorage.setItem('dailywins_habitIdMap', JSON.stringify(window.habitIdMap));
+            console.log('[getConvexHabitId] Saved new mapping to habitIdMap');
+          } catch (e) {
+            console.error('[getConvexHabitId] Failed to save habitIdMap:', e);
+          }
+        }
+        return convexHabit._id;
+      } else {
+        console.log('[getConvexHabitId] No matching Convex habit found for:', localHabit.name);
+      }
+    } else {
+      console.log('[getConvexHabitId] Local habit not found for ID:', id);
+    }
+  }
+  // Final attempt: reload habitIdMap from localStorage (in case it was updated by another tab)
+  try {
+    const saved = localStorage.getItem('dailywins_habitIdMap');
+    if (saved) {
+      const refreshedMap = JSON.parse(saved);
+      if (refreshedMap[id]) {
+        console.log('[getConvexHabitId] Found mapping in refreshed map:', id, '->', refreshedMap[id]);
+        return refreshedMap[id];
+      }
+    }
+  } catch (e) {
+    console.error('[getConvexHabitId] Error reloading map:', e);
+  }
+  // If no mapping found, return original ID (will cause mutation to fail but preserve behavior)
+  console.log('[getConvexHabitId] No mapping found, returning original id');
+  return id;
 }
 
 function toggleHabitAnimated(id, pts, el){
@@ -2395,18 +2522,52 @@ function toggleHabitAnimated(id, pts, el){
   console.log('[Habit] ID type:', typeof id, 'ID length:', id?.length);
   console.log('[Habit] window.userHabits:', window.userHabits);
   
-  const wasDone = todayData.done[id];
+  // Get Convex ID for this habit (mapping from local IDs to Convex IDs)
+  const convexId = getConvexHabitId(id);
+  const isValidConvexId = isConvexId(convexId);
+  console.log('[Habit] Convex ID:', convexId, 'isConvexId:', isValidConvexId);
+  
+  if (!isValidConvexId) {
+    console.warn('[Habit] WARNING: Invalid Convex ID, sync will be disabled. Mapping may be missing.');
+    console.warn('[Habit] habitIdMap:', window.habitIdMap);
+    console.warn('[Habit] userHabits:', window.userHabits);
+    console.warn('[Habit] local HABITS:', window.HABITS);
+  }
+  
+  // Use convexId for completion status (todayData.done may have migrated)
+  const wasDone = todayData.done[convexId] !== undefined ? todayData.done[convexId] : todayData.done[id];
   
   if(wasDone){
-    todayData.done[id]=false;
+    // Uncheck habit
+    todayData.done[convexId] = false;
+    // Also remove old ID entry if different
+    if (convexId !== id && todayData.done[id] !== undefined) {
+      delete todayData.done[id];
+    }
     state.totalPoints=Math.max(0,state.totalPoints-pts);
     toast('Habit unchecked');
     saveState();renderHabits();renderHeader();
-    // Habit sync disabled
+    // Sync to Convex
+    const token = localStorage.getItem('dailywins_token');
+    if (token && window.runMutation && id !== 'lang' && isValidConvexId) {
+      const today = new Date().toISOString().slice(0,10);
+      const completed = false;
+      console.log('[Habit] Uncheck mutation with convexId:', convexId);
+      window.runMutation("habits.logHabitCompletion", { token, habitId: convexId, date: today, completed, points: pts })
+        .then(r => console.log('[Habit] Uncheck mutation success:', r))
+        .catch(e => console.error('[Habit] Uncheck mutation error:', e));
+    } else {
+      console.log('[Habit] Uncheck sync skipped - token:', !!token, 'runMutation:', !!window.runMutation, 'id === lang:', id === 'lang', 'isValidConvexId:', isValidConvexId);
+    }
     return;
   }
   
-  todayData.done[id]=true;
+  // Check habit
+  todayData.done[convexId] = true;
+  // Also remove old ID entry if different
+  if (convexId !== id && todayData.done[id] !== undefined) {
+    delete todayData.done[id];
+  }
   state.totalPoints+=pts;
   beep('ok');
   showPointsPop(pts,el);
@@ -2426,9 +2587,22 @@ function toggleHabitAnimated(id, pts, el){
   }
   saveState();renderHabits();renderHeader();checkBadges();
   
-  // Habit sync disabled - needs fix
-  // TODO: Fix habit sync to use correct Convex IDs
-  console.log('[Habit] Sync disabled - habitId:', id);
+  // Sync to Convex
+  const token = localStorage.getItem('dailywins_token');
+  console.log('[Habit] Sync check - token:', !!token, 'runMutation:', !!window.runMutation, 'id:', id, 'convexId:', convexId, 'id !== lang:', id !== 'lang', 'isValidConvexId:', isValidConvexId);
+  if (token && window.runMutation && id !== 'lang' && isValidConvexId) {
+    const today = new Date().toISOString().slice(0,10);
+    const completed = true;
+    console.log('[Habit] Calling mutation with:', { habitId: convexId, date: today, completed, points: pts });
+    window.runMutation("habits.logHabitCompletion", { token, habitId: convexId, date: today, completed, points: pts })
+      .then(r => console.log('[Habit] Check mutation success:', r))
+      .catch(e => {
+        console.error('[Habit] Check mutation error:', e);
+        console.error('[Habit] Error details:', e.message, e.stack);
+      });
+  } else {
+    console.log('[Habit] Check sync skipped - token:', !!token, 'runMutation:', !!window.runMutation, 'id === lang:', id === 'lang', 'isValidConvexId:', isValidConvexId);
+  }
 }
 
 // ════════════════════════════════════

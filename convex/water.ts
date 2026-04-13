@@ -1,22 +1,17 @@
 import { query, mutation } from "./_generated/server";
 import { v } from "convex/values";
+import { getUserIdFromToken } from "./auth";
 
 async function getUserFromToken(ctx: any, token: string) {
   console.log("getUserFromToken called with token:", token?.substring(0, 20) + "...");
   
-  const credentials = await ctx.db.query("credentials").collect();
-  console.log("Total credentials:", credentials.length);
-  
-  const credential = credentials.find((c: any) => c.sessionToken === token);
-  console.log("Found credential:", !!credential);
-  
-  if (!credential) return null;
-  if (credential.sessionExpiry < Date.now()) {
-    console.log("Session expired");
+  const userId = await getUserIdFromToken(ctx, token);
+  if (!userId) {
+    console.log("Invalid or expired token");
     return null;
   }
   
-  const user = await ctx.db.get(credential.userId);
+  const user = await ctx.db.get(userId);
   console.log("Found user:", user?._id);
   return user;
 }

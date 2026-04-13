@@ -1,20 +1,16 @@
 import { query, mutation } from "./_generated/server";
 import { v } from "convex/values";
+import { getUserIdFromToken } from "./auth";
 
 export const getHabits = query({
   args: { token: v.string() },
   handler: async (ctx, args) => {
-    const credentials = await ctx.db.query("credentials").collect();
-    const credential = credentials.find(
-      (c: any) => c.sessionToken === args.token
-    );
-    
-    if (!credential) return [];
-    if (credential.sessionExpiry < Date.now()) return [];
-    
+    const userId = await getUserIdFromToken(ctx, args.token);
+    if (!userId) return [];
+
     const habits = await ctx.db
       .query("habits")
-      .withIndex("by_user", (q) => q.eq("userId", credential.userId))
+      .withIndex("by_user", (q) => q.eq("userId", userId))
       .collect();
 
     return habits.filter((h) => !h.archived).sort((a, b) => a.order - b.order);
@@ -24,17 +20,12 @@ export const getHabits = query({
 export const getHabitLogs = query({
   args: { token: v.string(), date: v.string() },
   handler: async (ctx, args) => {
-    const credentials = await ctx.db.query("credentials").collect();
-    const credential = credentials.find(
-      (c: any) => c.sessionToken === args.token
-    );
-    
-    if (!credential) return [];
-    if (credential.sessionExpiry < Date.now()) return [];
-    
+    const userId = await getUserIdFromToken(ctx, args.token);
+    if (!userId) return [];
+
     const logs = await ctx.db
       .query("habitLogs")
-      .withIndex("by_user_date", (q) => q.eq("userId", credential.userId).eq("date", args.date))
+      .withIndex("by_user_date", (q) => q.eq("userId", userId).eq("date", args.date))
       .collect();
 
     return logs.map(l => ({ habitId: l.habitId, completedAt: l.completedAt }));
@@ -46,32 +37,26 @@ export const logHabitCompletion = mutation({
   handler: async (ctx, args) => {
     console.log("logHabitCompletion called", JSON.stringify(args));
     
-    const credentials = await ctx.db.query("credentials").collect();
-    const credential = credentials.find(
-      (c: any) => c.sessionToken === args.token
-    );
-    
-    console.log("Credential found:", !!credential);
-    if (!credential) throw new Error("Invalid session");
-    if (credential.sessionExpiry < Date.now()) throw new Error("Session expired");
-    
-    const user = await ctx.db.get(credential.userId);
-    console.log("User found:", !!user, "userId:", credential.userId);
+    const userId = await getUserIdFromToken(ctx, args.token);
+    if (!userId) throw new Error("Invalid session");
+
+    const user = await ctx.db.get(userId);
+    console.log("User found:", !!user, "userId:", userId);
     if (!user) throw new Error("User not found");
-    
+
     // Check if habit exists and belongs to user
     const habit = await ctx.db.get(args.habitId);
     console.log("Habit found:", !!habit, "habitId:", args.habitId);
     if (!habit) throw new Error("Habit not found");
-    if (habit.userId.toString() !== credential.userId.toString()) {
+    if (habit.userId.toString() !== userId.toString()) {
       throw new Error("Habit does not belong to user");
     }
-    
+
     // Find existing log for this habit on this date
     const existing = await ctx.db
       .query("habitLogs")
       .withIndex("by_user_date", (q) => 
-        q.eq("userId", credential.userId).eq("date", args.date)
+        q.eq("userId", userId).eq("date", args.date)
       )
       .collect();
     
@@ -81,7 +66,7 @@ export const logHabitCompletion = mutation({
     if (args.completed) {
       if (!existingLog) {
         await ctx.db.insert("habitLogs", {
-          userId: credential.userId,
+          userId: userId,
           habitId: args.habitId,
           date: args.date,
           completedAt: Date.now(),
@@ -181,6 +166,43 @@ export const createHabit = mutation({
       .withIndex("by_email", (q) => q.eq("email", identity.email!))
       .unique();
 
+    if (!user) throw new Error("User not found");
+
+    const existingHabits = await ctx.db
+      .query("habits")
+      .withIndex("by_user", (q) => q.eq("userId", user._id))
+      .collect();
+
+    const maxOrder = existingHabits.reduce((max, h) => Math.max(max, h.order), -1);
+
+    const habitId = await ctx.db.insert("habits", {
+      userId: user._id,
+      name: args.name,
+      icon: args.icon,
+      description: args.description,
+      points: args.points,
+      order: maxOrder + 1,
+      archived: false,
+      createdAt: Date.now(),
+    });
+
+    return habitId;
+  },
+});
+
+export const createHabitWithToken = mutation({
+  args: {
+    token: v.string(),
+    name: v.string(),
+    icon: v.string(),
+    description: v.string(),
+    points: v.number(),
+  },
+  handler: async (ctx, args) => {
+    const userId = await getUserIdFromToken(ctx, args.token);
+    if (!userId) throw new Error("Invalid session");
+
+    const user = await ctx.db.get(userId);
     if (!user) throw new Error("User not found");
 
     const existingHabits = await ctx.db

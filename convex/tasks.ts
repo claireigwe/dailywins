@@ -1,12 +1,11 @@
 import { query, mutation } from "./_generated/server";
 import { v } from "convex/values";
+import { getUserIdFromToken } from "./auth";
 
 async function getUserFromToken(ctx: any, token: string) {
-  const credentials = await ctx.db.query("credentials").collect();
-  const credential = credentials.find((c: any) => c.sessionToken === token);
-  if (!credential) return null;
-  if (credential.sessionExpiry < Date.now()) return null;
-  return await ctx.db.get(credential.userId);
+  const userId = await getUserIdFromToken(ctx, token);
+  if (!userId) return null;
+  return await ctx.db.get(userId);
 }
 
 export const listTasks = query({
