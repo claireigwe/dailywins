@@ -2132,7 +2132,9 @@ function removeWater(){
   const token = localStorage.getItem('dailywins_token');
   if (token && window.runMutation) {
     const today = new Date().toISOString().slice(0,10);
-    window.runMutation("water.removeWater", { token, date: today }).catch(e => console.error('Failed to sync water remove:', e));
+    window.runMutation("water.removeWater", { token, date: today })
+      .then(r => console.log('[Water] Remove mutation success:', r))
+      .catch(e => console.error('[Water] Remove mutation error:', e));
   }
 }
 

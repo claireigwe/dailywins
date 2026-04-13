@@ -1501,11 +1501,11 @@ function startBackgroundSync() {
         if (typeof renderHabits === 'function') renderHabits();
       }
       
-      // Sync water - use max of local and Convex
+      // Sync water - trust Convex as source of truth
       const water = await runQuery("water.getWaterLog", { token, date: today });
       console.log('[Sync] Water from Convex:', water);
       if (water && window.todayData) {
-        window.todayData.water = Math.max(window.todayData.water || 0, water.glasses || 0);
+        window.todayData.water = water.glasses || 0;
         saveState();
         if (typeof renderWater === 'function') renderWater();
       }
