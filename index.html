@@ -2445,7 +2445,7 @@ function renderAlarmStatus(){
 function isConvexId(id) {
   // Convex IDs are typically 24 characters: lowercase letter followed by alphanumeric chars
   // Some Convex IDs may be 32 characters (e.g., jx7f8e74xw0h71166589m5j12984sghj)
-  return typeof id === 'string' && /^[a-z][a-z0-9]{19,31}$/.test(id);
+  return typeof id === 'string' && /^[a-z][a-z0-9]{19,32}$/.test(id);
 }
 
 function getConvexHabitId(id) {
